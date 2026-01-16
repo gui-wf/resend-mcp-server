@@ -1,660 +1,788 @@
 # Resend MCP Server - Implementation Plan
 
+**Last Updated**: 2026-01-16
+**Strategy**: Automated generation via Speakeasy with OpenAPI overlays
+**Target**: Production-ready MCP server with 25-30 curated tools
+
+---
+
 ## Executive Summary
 
-This document outlines the complete approach for building a comprehensive MCP Server that wraps the Resend API, enabling AI assistants like Claude Code to manage email operations, templates, domains, contacts, and more through natural language.
+This MCP server will be **generated from the Resend OpenAPI specification** using Speakeasy's MCP generation tooling. All customizations (tool names, descriptions, MCP hints, scope assignments) will be applied via **OpenAPI overlays** without modifying the source specification. This approach ensures:
+
+- Automatic synchronization with Resend API updates
+- Consistent tool implementation across all endpoints
+- Minimal maintenance overhead
+- Production-quality generated code
 
 ---
 
-## Part 1: Research Findings
+## Architecture Overview
 
-### 1.1 MCP Security Features for Sensitive Data
-
-**Key Finding: MCP has annotation mechanisms, but they are advisory only.**
-
-#### What MCP Provides:
-
-1. **Audience Annotations** (Stable)
-   ```typescript
-   {
-     type: "text",
-     text: "Sensitive content",
-     annotations: {
-       audience: ["user"],  // Hint: show only to user, not LLM
-       priority: 1
-     }
-   }
-   ```
-   - Values: `["user"]`, `["assistant"]`, `["user", "assistant"]`
-   - **Critical limitation**: These are hints only - clients can ignore them
-
-2. **Tool Annotations** (Stable)
-   ```typescript
-   {
-     name: "delete_domain",
-     annotations: {
-       readOnlyHint: false,
-       destructiveHint: true,
-       idempotentHint: false,
-       openWorldHint: true
-     }
-   }
-   ```
-   - Help clients display appropriate warnings
-   - Not enforced by the protocol
-
-3. **URL Mode Elicitation** (Stable, 2025-11-25 spec)
-   - **Only mechanism that truly bypasses the LLM**
-   - Redirects users to external HTTPS pages for credential entry
-   - Credentials never pass through MCP client or LLM context
-   - **Recommendation**: Use for API key setup if implementing OAuth flows
-
-4. **Proposed Security Annotations** (RFC, not yet standard)
-   - `sensitiveHint`: low/medium/high sensitivity levels
-   - `privateHint`: internal/organizational data
-   - `maliciousActivityHint`: detected threats
-   - Status: Under discussion in [Issue #711](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/711)
-
-#### What Claude Code Supports:
-
-| Feature | Support Level |
-|---------|--------------|
-| Tool annotations (`readOnlyHint`, etc.) | Yes (display hints) |
-| Content `audience` annotations | Yes (advisory) |
-| Direct-to-user display bypassing LLM | **No** |
-| Sensitive data special handling | Environment variables only |
-| Elicitation (URL mode) | **No** |
-
-**Practical Implication**:
-- We cannot prevent sensitive data from reaching the LLM via annotations alone
-- Must implement server-side masking/redaction for secrets
-- API keys should be handled via environment variables, never returned in responses
-
----
-
-### 1.2 Resend API Analysis
-
-**API Summary:**
-- **Base URL**: `https://api.resend.com`
-- **Version**: 1.1.0
-- **Auth**: Bearer token (`re_xxxxxxxxx`)
-- **Rate Limit**: 2 req/sec (upgradeable)
-
-**Complete Tool Inventory (68 tools across 12 categories):**
-
-| Category | Read | Write | Delete | Total |
-|----------|------|-------|--------|-------|
-| Emails | 4 | 4 | 0 | 8 |
-| Received Emails | 4 | 0 | 0 | 4 |
-| Domains | 2 | 3 | 1 | 6 |
-| API Keys (Sensitive) | 1 | 1 | 1 | 3 |
-| Templates | 2 | 4 | 1 | 7 |
-| Audiences | 2 | 1 | 1 | 4 |
-| Contacts | 4 | 4 | 3 | 11 |
-| Segments | 2 | 1 | 1 | 4 |
-| Topics | 2 | 2 | 1 | 5 |
-| Contact Properties | 2 | 2 | 1 | 5 |
-| Broadcasts | 2 | 3 | 1 | 6 |
-| Webhooks (Sensitive) | 2 | 2 | 1 | 5 |
-| **TOTAL** | **29** | **27** | **12** | **68** |
-
-**Sensitive Operations Requiring Special Handling:**
-
-1. **HIGH Sensitivity**:
-   - `POST /api-keys` - Returns token only once (never retrievable again)
-   - `POST /webhooks` - Returns `signing_secret`
-   - `GET /webhooks/{id}` - Contains `signing_secret`
-
-2. **Destructive Operations** (require confirmation):
-   - All DELETE endpoints
-   - `POST /broadcasts/{id}/send` (irreversible)
-
----
-
-### 1.3 Licensing Recommendation
-
-**Recommendation: AGPL v3 with Dual-Licensing Option**
-
-| Your Goal | How AGPL Achieves It |
-|-----------|---------------------|
-| Keep project open source | OSI-approved ✓ |
-| Prevent "clone and claim" | Copyleft + network clause forces disclosure |
-| Use in your own commercial services | As copyright holder, you're exempt |
-| Maintain attribution | Required by license |
-
-**Why not MIT?**
-- Anyone can fork, make proprietary changes, and compete without contributing back
-- Only requires attribution in copyright notice
-
-**Why not GPL v3?**
-- SaaS loophole: Running modified code as a service doesn't trigger copyleft
-- MCP servers typically run as services
-
-**AGPL Benefits:**
-- Network clause closes the SaaS loophole
-- If someone modifies and deploys, they must share source
-- You retain full commercial rights as copyright holder
-
-**Implementation:**
 ```
-LICENSE: AGPL-3.0-or-later
-
-For commercial licensing inquiries: [your email]
-```
-
-**Important for Contributors:**
-- Require a Contributor License Agreement (CLA) for external contributions
-- This preserves your ability to dual-license
-
----
-
-### 1.4 Resend Terms of Service Compliance
-
-**Key Finding: Building this MCP server is fully compliant.**
-
-**Evidence:**
-1. Resend has an **official MCP server** ([resend/mcp-send-email](https://github.com/resend/mcp-send-email)) under MIT license
-2. No ToS restrictions on API wrappers or third-party integrations found
-3. Multiple community MCP servers exist without issues
-4. Resend provides open-source SDKs for multiple languages
-
-**Requirements to Comply:**
-1. Users must provide their own Resend API key
-2. Must not circumvent rate limits (2 req/sec)
-3. Must not violate Acceptable Use Policy (complaint rate < 0.08%, bounce rate < 4%)
-4. Include disclaimer that project is unofficial
-
-**Required Disclaimer for README:**
-```markdown
-## Disclaimer
-
-This is an unofficial, community-maintained MCP server. It is not affiliated with,
-officially maintained, or endorsed by Resend (Plus Five Five, Inc.).
-
-Users must:
-- Have their own Resend account and API key
-- Comply with Resend's [Terms of Service](https://resend.com/legal/terms-of-service)
-- Comply with Resend's [Acceptable Use Policy](https://resend.com/legal/acceptable-use)
-- Follow applicable email regulations (CAN-SPAM, GDPR, etc.)
+┌─────────────────────────────────────────────────────────┐
+│                    Resend OpenAPI Spec                   │
+│              (resend/resend-openapi repo)                │
+│                   openapi/resend.yaml                    │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            │ merge
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   OpenAPI Overlays                       │
+│   openapi/overlays/                                      │
+│   ├── scopes.yaml        (read/write/admin tags)        │
+│   ├── mcp-hints.yaml     (MCP annotations)              │
+│   ├── exclusions.yaml    (disabled tools)               │
+│   └── descriptions.yaml  (LLM-friendly docs)            │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            │ speakeasy generate mcp
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                  Generated MCP Server                    │
+│   src/                                                   │
+│   ├── mcp-server/                                        │
+│   │   ├── server.ts      (MCP protocol handler)         │
+│   │   ├── tools.ts       (tool registry)                │
+│   │   └── resources.ts   (optional resources)           │
+│   ├── models/            (TypeScript types)             │
+│   ├── core.ts            (HTTP client with auth)        │
+│   └── functions/         (custom hooks)                 │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            │ build
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Distribution                          │
+│   ├── npm package (@resend-mcp-server)                  │
+│   ├── MCPB bundle (Claude Desktop drag-and-drop)        │
+│   └── Git repository (source)                           │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Part 2: Architecture Design
+## Technology Stack
 
-### 2.1 Project Structure
+| Component | Technology | Rationale |
+|-----------|------------|-----------|
+| **Code Generator** | Speakeasy CLI (via npm) | Production-proven (50+ MCP servers), active maintenance |
+| **Source Spec** | Resend OpenAPI 3.x | Official spec from resend/resend-openapi |
+| **Runtime** | Node.js 24+ | Project standard, matches flake.nix |
+| **Language** | TypeScript 5+ | Generated by Speakeasy |
+| **MCP SDK** | @modelcontextprotocol/sdk | Managed by Speakeasy |
+| **HTTP Client** | Generated by Speakeasy | Includes auth, retry, rate limiting |
+| **Testing** | vitest + msw | Fast TypeScript testing + API mocking |
+| **Distribution** | npm + MCPB | Developer + end-user reach |
 
-```
-resend-mcp-server/
-├── src/
-│   ├── index.ts                    # MCP server entry point
-│   ├── config/
-│   │   ├── environment.ts          # Environment validation (Zod)
-│   │   └── constants.ts            # API constants, rate limits
-│   ├── services/
-│   │   ├── resend-client.ts        # Resend API client wrapper
-│   │   └── rate-limiter.ts         # Rate limiting implementation
-│   ├── tools/
-│   │   ├── index.ts                # Tool registry
-│   │   ├── emails/
-│   │   │   ├── send-email.ts
-│   │   │   ├── send-batch-emails.ts
-│   │   │   ├── list-emails.ts
-│   │   │   ├── get-email.ts
-│   │   │   ├── update-email.ts
-│   │   │   └── cancel-email.ts
-│   │   ├── domains/
-│   │   │   ├── create-domain.ts
-│   │   │   ├── list-domains.ts
-│   │   │   ├── get-domain.ts
-│   │   │   ├── update-domain.ts
-│   │   │   ├── delete-domain.ts
-│   │   │   └── verify-domain.ts
-│   │   ├── templates/
-│   │   │   └── ... (7 tools)
-│   │   ├── audiences/
-│   │   │   └── ... (4 tools)
-│   │   ├── contacts/
-│   │   │   └── ... (11 tools)
-│   │   ├── broadcasts/
-│   │   │   └── ... (6 tools)
-│   │   ├── api-keys/
-│   │   │   └── ... (3 tools - sensitive)
-│   │   └── webhooks/
-│   │       └── ... (5 tools - sensitive)
-│   ├── types/
-│   │   ├── index.ts                # Shared TypeScript types
-│   │   ├── resend.ts               # Resend API types
-│   │   └── mcp.ts                  # MCP-specific types
-│   └── utils/
-│       ├── errors.ts               # Error handling
-│       ├── validation.ts           # Input validation helpers
-│       └── masking.ts              # Sensitive data masking
-├── tests/
-│   └── ... (mirror src structure)
-├── package.json
-├── tsconfig.json
-├── LICENSE                          # AGPL-3.0
-├── CONTRIBUTING.md                  # CLA requirement
-├── README.md
-└── CLAUDE.md                        # AI development guidelines
+---
+
+## Development Environment Guardrails
+
+**This project is developed exclusively on NixOS using Nix flakes.**
+
+### DO:
+
+- **ALWAYS** enter `nix develop` before running any commands
+- **ALWAYS** use npm/npx for Node.js packages (Speakeasy, TypeScript tools, etc.)
+- **ALWAYS** add system-level dependencies to `flake.nix` buildInputs
+- **ALWAYS** keep flake.lock committed to version control
+- **ALWAYS** use direnv for automatic shell activation (recommended)
+- **ALWAYS** validate environment with `echo $IN_NIX_SHELL` (should output "impure")
+- **ALWAYS** use npm scripts for code generation: `npm run generate`, `npm run validate`
+
+### DO NOT:
+
+- **NEVER** install Node.js, npm, or other dev tools outside of Nix
+- **NEVER** use Homebrew, apt, yum, or other non-Nix package managers
+- **NEVER** manually download binaries (use Nix derivations or npm packages)
+- **NEVER** reference "Standard Node.js" or non-Nix setups in documentation
+- **NEVER** assume cross-platform compatibility unless tested on NixOS first
+- **NEVER** use global npm installs (`npm install -g`) - use project-local packages
+- **NEVER** modify NODE_PATH or other environment variables manually
+
+### Nix-Specific Workflows
+
+**Adding a System Dependency:**
+1. Edit `flake.nix` → add to `buildInputs`
+2. Exit and re-enter shell: `exit` then `nix develop`
+3. Verify with `which <command>`
+
+**Updating Nix Packages:**
+```bash
+nix flake update
+nix develop  # Re-enter shell with updated packages
 ```
 
-### 2.2 Security Implementation Strategy
+**Building Production Package:**
+```bash
+nix build  # First time will fail with hash mismatch
+# Copy the correct hash from error output
+# Update npmDepsHash in flake.nix
+nix build  # Should succeed
+```
 
-Since MCP annotations cannot guarantee LLM bypass, implement server-side protections:
+---
+
+## Tool Curation Strategy
+
+### Total Available: 62 Endpoints
+### Target: 25-30 Curated Tools
+
+#### Tool Selection Criteria
+
+1. **High-value operations** frequently used by AI assistants
+2. **Non-sensitive operations** (exclude API key management)
+3. **Well-documented** in OpenAPI spec
+4. **Reasonable parameter complexity** (< 15 parameters)
+
+#### Scope Categories
+
+| Scope | Operations | Tool Count | Runtime Flag |
+|-------|------------|------------|--------------|
+| **read** | GET, HEAD | ~12 tools | `--scope read` |
+| **write** | POST, PUT, PATCH | ~15 tools | `--scope write` |
+| **admin** | API keys, webhooks | ~3 tools | `--scope admin` |
+
+### Included Tools (Preliminary)
+
+#### Email Operations (7 tools) - Scope: write, read
+- `send_email` - Send single email (openWorldHint: true)
+- `send_batch_emails` - Send up to 100 emails (openWorldHint: true)
+- `get_email` - Retrieve email by ID (readOnlyHint: true)
+- `list_emails` - List sent emails with pagination (readOnlyHint: true)
+- `cancel_email` - Cancel scheduled email (destructiveHint: true)
+- `update_email` - Update scheduled email
+- `get_email_html` - Get rendered HTML (readOnlyHint: true)
+
+#### Domain Operations (5 tools) - Scope: write, read
+- `create_domain` - Add new domain
+- `get_domain` - Retrieve domain details (readOnlyHint: true)
+- `list_domains` - List all domains (readOnlyHint: true)
+- `verify_domain` - Trigger DNS verification
+- `delete_domain` - Remove domain (destructiveHint: true)
+
+#### Template Operations (4 tools) - Scope: write, read
+- `create_template` - Create email template
+- `get_template` - Retrieve template (readOnlyHint: true)
+- `list_templates` - List all templates (readOnlyHint: true)
+- `update_template` - Modify template
+
+#### Contact Operations (4 tools) - Scope: write, read
+- `create_contact` - Add contact to audience
+- `get_contact` - Retrieve contact (readOnlyHint: true)
+- `list_contacts` - List contacts with filters (readOnlyHint: true)
+- `delete_contact` - Remove contact (destructiveHint: true)
+
+#### Audience Operations (3 tools) - Scope: write, read
+- `create_audience` - Create new audience/list
+- `get_audience` - Retrieve audience (readOnlyHint: true)
+- `list_audiences` - List all audiences (readOnlyHint: true)
+
+#### Broadcast Operations (2 tools) - Scope: write
+- `create_broadcast` - Create broadcast message
+- `send_broadcast` - Send to audience (openWorldHint: true)
+
+### Excluded Tools (Sensitive/Rare)
+
+- API key management (create, list, delete) - **Sensitive**
+- Webhook secret rotation - **Sensitive**
+- Contact properties (low usage)
+- Segments (advanced feature)
+- Topics (advanced feature)
+- Email attachments endpoints (handled via send_email params)
+
+---
+
+## OpenAPI Overlay System
+
+### Why Overlays?
+
+1. **Preserve source spec**: Never modify `resend.yaml` directly
+2. **Version control**: Track customizations separately
+3. **Easy updates**: Regenerate when Resend updates spec
+4. **Reusability**: Share overlay patterns across projects
+
+### Overlay Structure
+
+```
+openapi/overlays/
+├── scopes.yaml          # Scope tags for filtering
+├── mcp-hints.yaml       # MCP behavioral hints
+├── exclusions.yaml      # Disabled tools
+└── descriptions.yaml    # LLM-optimized descriptions
+```
+
+### Overlay Application Order
+
+1. Base spec (`resend.yaml`)
+2. Scopes (tag all operations)
+3. MCP hints (add x-speakeasy-mcp)
+4. Exclusions (disable specific tools)
+5. Descriptions (enhance docs)
+
+### Example: Scopes Overlay
+
+```yaml
+# openapi/overlays/scopes.yaml
+overlay: 1.0.0
+info:
+  title: Scope Assignment Overlay
+  version: 1.0.0
+actions:
+  # Assign 'read' scope to all GET operations
+  - target: "$.paths[*].get"
+    update:
+      x-speakeasy-mcp:
+        scopes: ["read"]
+
+  # Assign 'write' scope to POST/PUT/PATCH operations
+  - target: "$.paths[*].[post,put,patch]"
+    update:
+      x-speakeasy-mcp:
+        scopes: ["write"]
+
+  # Assign 'admin' scope to API key operations
+  - target: "$.paths['/api-keys*'].*"
+    update:
+      x-speakeasy-mcp:
+        scopes: ["admin"]
+```
+
+### Example: MCP Hints Overlay
+
+```yaml
+# openapi/overlays/mcp-hints.yaml
+overlay: 1.0.0
+info:
+  title: MCP Behavioral Hints
+  version: 1.0.0
+actions:
+  # Email sending operations
+  - target: "$.paths['/emails'].post"
+    update:
+      x-speakeasy-mcp:
+        name: "send_email"
+        title: "Send Email"
+        readOnlyHint: false
+        idempotentHint: false
+        openWorldHint: true
+
+  # Read-only GET operations
+  - target: "$.paths['/emails/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        name: "get_email"
+        title: "Get Email"
+        readOnlyHint: true
+        idempotentHint: true
+
+  # Destructive DELETE operations
+  - target: "$.paths['/domains/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        name: "delete_domain"
+        title: "Delete Domain"
+        destructiveHint: true
+        readOnlyHint: false
+```
+
+### Example: Exclusions Overlay
+
+```yaml
+# openapi/overlays/exclusions.yaml
+overlay: 1.0.0
+info:
+  title: Tool Exclusions
+  version: 1.0.0
+actions:
+  # Disable API key management tools (sensitive)
+  - target: "$.paths['/api-keys'].[get,post]"
+    update:
+      x-speakeasy-mcp:
+        disabled: true
+
+  - target: "$.paths['/api-keys/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        disabled: true
+```
+
+---
+
+## Generated Server Structure
+
+### Key Generated Files
+
+```
+src/
+├── mcp-server/
+│   ├── server.ts              # MCP protocol implementation
+│   │                          # - ListTools handler
+│   │                          # - CallTool handler
+│   │                          # - Stdio transport
+│   ├── tools.ts               # Tool registry and execution
+│   │                          # - Tool definitions from OpenAPI
+│   │                          # - Input validation (Zod)
+│   │                          # - Response formatting
+│   └── resources.ts           # Optional MCP resources
+│
+├── models/                    # Generated TypeScript types
+│   ├── operations/            # Request/response types
+│   └── components/            # Shared schemas
+│
+├── core.ts                    # HTTP client with:
+│   ├── Authentication         # Bearer token (RESEND_API_KEY)
+│   ├── Rate limiting          # 2 req/sec default
+│   ├── Retry logic            # Exponential backoff
+│   └── Error handling         # Structured MCP errors
+│
+├── functions/                 # Custom hook points
+│   ├── beforeRequest.ts       # Request interceptor
+│   └── afterResponse.ts       # Response transformer
+│
+└── index.ts                   # Entry point
+```
+
+### Customization Points
+
+Even with generated code, we can customize via:
+
+1. **functions/beforeRequest.ts** - Add custom headers, logging
+2. **functions/afterResponse.ts** - Transform responses, add metadata
+3. **.speakeasy/gen.yaml** - Control generation settings
+4. **Environment variables** - Runtime configuration
+
+---
+
+## Rate Limiting & Retry Strategy
+
+### Resend API Limits
+
+- **Default**: 2 requests per second per API key
+- **Paid plans**: Higher limits available
+- **429 Response**: Includes `Retry-After` header
+
+### Generated Client Behavior
+
+Speakeasy generates HTTP clients with:
 
 ```typescript
-// src/utils/masking.ts
-export function maskApiKey(key: string): string {
-  if (!key) return "";
-  // Show first 6 and last 4 characters only
-  return `${key.slice(0, 6)}...${key.slice(-4)}`;
-}
-
-export function maskWebhookSecret(secret: string): string {
-  // Never return the actual secret in list operations
-  return "********";
-}
-
-// For sensitive operations, add explicit warnings in descriptions
-const createApiKeyTool = {
-  name: "create_api_key",
-  description: `Creates a new Resend API key.
-    ⚠️ IMPORTANT: The API token will be shown ONLY ONCE and cannot be retrieved later.
-    Store it securely immediately after creation.`,
-  annotations: {
-    readOnlyHint: false,
-    destructiveHint: false,
-    idempotentHint: false
+// Automatically included in generated core.ts
+{
+  retries: {
+    strategy: "exponential_backoff",
+    initialInterval: 500,      // ms
+    maxInterval: 60000,        // 60s
+    maxElapsedTime: 300000,    // 5 minutes
+    retryConnectionErrors: true
+  },
+  rateLimiter: {
+    requestsPerSecond: 2
   }
-};
+}
 ```
 
-### 2.3 Tool Annotation Strategy
+### Custom Overrides (if needed)
 
-Apply consistent annotations for client UX:
+Add to `functions/beforeRequest.ts`:
 
 ```typescript
-// Read-only tools (list, get operations)
-{ readOnlyHint: true, destructiveHint: false, idempotentHint: true }
+export async function beforeRequest(request: Request): Promise<Request> {
+  // Wait for rate limiter slot
+  await rateLimiter.waitForSlot();
 
-// Write tools (create, update)
-{ readOnlyHint: false, destructiveHint: false, idempotentHint: false }
+  // Add custom headers
+  request.headers.set("X-Request-ID", generateRequestId());
 
-// Delete tools
-{ readOnlyHint: false, destructiveHint: true, idempotentHint: false }
-
-// Send operations (emails, broadcasts)
-{ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true }
+  return request;
+}
 ```
 
-### 2.4 Rate Limiting Strategy (Transparent Wait)
+---
 
-The MCP server will handle rate limiting by transparently waiting the necessary time before making requests, rather than failing:
+## Environment Configuration
+
+### Required Variables
+
+```bash
+# API Authentication
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Optional: Runtime behavior
+MCP_SCOPES=read,write              # Filter tools by scope
+MCP_TOOLS=send_email,get_email     # Specific tool allowlist
+MCP_DEBUG=true                     # Enable debug logging
+```
+
+### Configuration Precedence
+
+1. Environment variables
+2. `.env` file
+3. CLI flags (`--scope`, `--tool`)
+4. Default values
+
+### Validation
+
+Environment validation happens at server startup:
 
 ```typescript
-// src/services/rate-limiter.ts
-export class RateLimiter {
-  private lastRequestTime = 0;
-  private readonly minInterval = 500; // 2 requests per second = 500ms between requests
+// Generated in src/config.ts or similar
+const envSchema = z.object({
+  RESEND_API_KEY: z.string()
+    .min(1, "RESEND_API_KEY is required")
+    .startsWith("re_", "RESEND_API_KEY must start with 're_'"),
+  MCP_SCOPES: z.string().optional(),
+  MCP_TOOLS: z.string().optional(),
+  MCP_DEBUG: z.boolean().optional(),
+});
+```
 
-  /**
-   * Waits until it's safe to make the next request.
-   * This is transparent to the caller - the request will simply take longer.
-   */
-  async waitForSlot(): Promise<void> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
+---
 
-    if (timeSinceLastRequest < this.minInterval) {
-      const waitTime = this.minInterval - timeSinceLastRequest;
-      await this.delay(waitTime);
-    }
+## Testing Strategy
 
-    this.lastRequestTime = Date.now();
-  }
+### Test Pyramid
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-}
+```
+              ┌─────────────┐
+              │    E2E      │  (MCP Inspector, Claude Desktop)
+              │   5 tests   │
+              └─────────────┘
+           ┌────────────────────┐
+           │   Integration      │  (API mocks, tool execution)
+           │    20 tests        │
+           └────────────────────┘
+      ┌──────────────────────────────┐
+      │         Unit                 │  (Schema validation, helpers)
+      │        50 tests               │
+      └──────────────────────────────┘
+```
 
-// Usage in resend-client.ts
-class ResendClient {
-  private rateLimiter = new RateLimiter();
+### Test Categories
 
-  async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    // Wait for rate limit slot (transparent to caller)
-    await this.rateLimiter.waitForSlot();
+#### Unit Tests (`tests/unit/`)
+- Input validation (Zod schemas)
+- Parameter transformations
+- Error formatting
+- Utility functions
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-        ...options?.headers
-      }
+#### Integration Tests (`tests/integration/`)
+- Tool execution with mocked API
+- Scope filtering logic
+- Rate limiting behavior
+- Error handling paths
+
+#### E2E Tests (`tests/e2e/`)
+- MCP Inspector protocol compliance
+- Claude Desktop integration
+- Real API calls (sandboxed)
+- MCPB bundle installation
+
+### Test Infrastructure
+
+```typescript
+// tests/helpers/mock-resend.ts
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
+
+export const mockResendAPI = setupServer(
+  http.post('https://api.resend.com/emails', () => {
+    return HttpResponse.json({
+      id: 'mock-email-id',
+      from: 'test@example.com',
+      to: ['recipient@example.com'],
+      created_at: new Date().toISOString(),
     });
-
-    // Handle 429 with retry (in case of burst or server-side rate limit)
-    if (response.status === 429) {
-      const retryAfter = parseInt(response.headers.get("Retry-After") || "1", 10) * 1000;
-      await this.delay(retryAfter);
-      return this.request<T>(endpoint, options);
-    }
-
-    return response.json();
-  }
-}
-```
-
-### 2.5 Graceful Cancellation Handling
-
-Per MCP best practices, handle tool call interruptions gracefully:
-
-```typescript
-// src/utils/cancellation.ts
-export class CancellationToken {
-  private _isCancelled = false;
-
-  get isCancelled(): boolean {
-    return this._isCancelled;
-  }
-
-  cancel(): void {
-    this._isCancelled = true;
-  }
-
-  throwIfCancelled(): void {
-    if (this._isCancelled) {
-      throw new OperationCancelledError("Operation was cancelled by the client");
-    }
-  }
-}
-
-export class OperationCancelledError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "OperationCancelledError";
-  }
-}
-
-// In tool execution
-async function executeTool(args: unknown, cancellation: CancellationToken): Promise<ToolResult> {
-  // Check for cancellation at safe points
-  cancellation.throwIfCancelled();
-
-  // Do work...
-  await someOperation();
-
-  // Check again after async operations
-  cancellation.throwIfCancelled();
-
-  return result;
-}
-```
-
-For batch operations, support partial results:
-
-```typescript
-async function sendBatchEmails(
-  emails: Email[],
-  cancellation: CancellationToken
-): Promise<BatchResult> {
-  const results: EmailResult[] = [];
-  const errors: EmailError[] = [];
-
-  for (const email of emails) {
-    // Check for cancellation before each email
-    if (cancellation.isCancelled) {
-      return {
-        completed: results,
-        errors,
-        cancelled: true,
-        remaining: emails.length - results.length - errors.length
-      };
-    }
-
-    try {
-      const result = await sendEmail(email);
-      results.push(result);
-    } catch (error) {
-      errors.push({ email: email.to, error: error.message });
-    }
-  }
-
-  return { completed: results, errors, cancelled: false, remaining: 0 };
-}
-```
-
----
-
-## Part 3: Implementation Roadmap
-
-### Phase 1: Core Infrastructure (Foundation)
-
-**Goals**: Set up project structure, authentication, and basic tooling
-
-1. Initialize TypeScript project with ES modules
-2. Set up Zod environment validation for `RESEND_API_KEY`
-3. Create Resend API client with:
-   - Bearer token authentication
-   - Rate limiting (transparent wait approach)
-   - Structured error handling
-   - Cancellation support
-4. Implement MCP server skeleton with stdio transport
-5. Create tool registration system
-
-**Deliverables**:
-- Working MCP server that connects via stdio
-- `list_tools` returns empty array
-- Rate limiter utility (wait-based)
-
-### Phase 2: Email Operations (Core Value)
-
-**Goals**: Implement primary email functionality
-
-1. `send_email` - Send single email (with idempotency support)
-2. `send_batch_emails` - Send up to 100 emails (with partial cancellation support)
-3. `list_emails` - Paginated email list
-4. `get_email` - Retrieve email by ID
-
-**Deliverables**:
-- Can send emails via Claude Code
-- Pagination working
-- Error handling for common cases (invalid recipients, rate limits)
-
-### Phase 3: Domain Management
-
-**Goals**: Enable domain setup and verification
-
-1. `create_domain` - Create domain with region selection
-2. `list_domains` - List all domains
-3. `get_domain` - Get domain details with DNS records
-4. `verify_domain` - Trigger verification
-5. `update_domain` - Update tracking/TLS settings
-6. `delete_domain` - Remove domain (with confirmation warning)
-
-**Deliverables**:
-- Full domain lifecycle management
-- DNS record guidance for verification
-
-### Phase 4: Contact & Audience Management
-
-**Goals**: Enable subscriber list management
-
-1. Audience CRUD (4 tools)
-2. Contact CRUD (6 tools)
-3. Contact segment operations (3 tools)
-4. Contact topic operations (2 tools)
-
-**Deliverables**:
-- Can build and manage subscriber lists
-- Contact import/export via API
-
-### Phase 5: Templates
-
-**Goals**: Enable reusable email templates
-
-1. Template CRUD (5 tools)
-2. `publish_template` - Make template usable
-3. `duplicate_template` - Clone existing template
-
-**Deliverables**:
-- Template management
-- Integration with `send_email` template parameter
-
-### Phase 6: Broadcasts
-
-**Goals**: Enable marketing campaign management
-
-1. Broadcast CRUD (4 tools)
-2. `send_broadcast` - Send or schedule broadcast
-3. `delete_broadcast` - Remove draft only
-
-**Deliverables**:
-- Full broadcast campaign lifecycle
-
-### Phase 7: Advanced Features
-
-**Goals**: Complete API coverage
-
-1. Segments (4 tools)
-2. Topics (5 tools)
-3. Contact Properties (5 tools)
-4. Received Emails (4 tools)
-5. Email Attachments (2 tools)
-
-**Deliverables**:
-- Complete non-sensitive API coverage
-
-### Phase 8: Sensitive Operations (Final)
-
-**Goals**: Implement with extra safeguards
-
-1. API Keys (3 tools)
-   - `create_api_key` with one-time token warning
-   - `list_api_keys` with masked tokens
-   - `delete_api_key` with confirmation
-
-2. Webhooks (5 tools)
-   - `create_webhook` with secret handling
-   - `get_webhook` with secret masking option
-   - `list_webhooks` with secrets masked
-   - `update_webhook`
-   - `delete_webhook`
-
-**Deliverables**:
-- Full API coverage (68 tools)
-- Sensitive data properly handled
-
----
-
-## Part 4: GitHub Repository Setup
-
-### 4.1 Repository Configuration
-
-**Name**: `resend-mcp-server`
-**Owner**: `gui-wf`
-**Visibility**: Public
-**Description**: "Comprehensive MCP Server for Resend API - manage emails, domains, templates, contacts, and more via AI assistants"
-
-**Topics**: `mcp`, `resend`, `email`, `ai`, `claude`, `model-context-protocol`, `typescript`
-
-### 4.2 Initial Files
-
-1. **LICENSE** - AGPL-3.0-or-later
-2. **README.md** - Installation, usage, disclaimer
-3. **CONTRIBUTING.md** - CLA requirement, code standards
-4. **CLAUDE.md** - AI development guidelines (from existing)
-5. **.gitignore** - Node.js defaults
-6. **package.json** - Initial dependencies
-7. **tsconfig.json** - TypeScript configuration
-
-### 4.3 Branch Protection
-
-- Require PR reviews for `main`
-- Require status checks (tests, lint)
-- No force pushes to `main`
-
----
-
-## Part 5: Questions for Clarification
-
-Before proceeding with GitHub repository creation, please confirm:
-
-1. **License**: Proceed with AGPL-3.0? (Allows your commercial use while preventing others from proprietarizing)
-
-2. **Repository Name**: `resend-mcp-server` or prefer something else?
-
-3. **Initial Scope**: Start with Phase 1-2 (core + emails) or different priority?
-
-4. **CLA Approach**: Simple CLA in CONTRIBUTING.md or formal CLA bot integration?
-
-5. **npm Publishing**: Plan to publish to npm registry? (Affects package.json setup)
-
----
-
-## Appendix A: Sensitive Data Handling Summary
-
-| Data Type | MCP Approach | Our Implementation |
-|-----------|--------------|-------------------|
-| API Key (user's) | Environment variable | `RESEND_API_KEY` env var |
-| Created API tokens | Cannot hide from LLM | Warn user in response, mask in lists |
-| Webhook secrets | Cannot hide from LLM | Warn user, mask in lists |
-| PII (contacts) | Annotations (advisory) | Add `audience: ["user", "assistant"]` |
-| Email content | Annotations (advisory) | No special handling needed |
-
-## Appendix B: Error Response Format
-
-```typescript
-// Standard MCP error response
-return {
-  content: [{
-    type: "text",
-    text: JSON.stringify({
-      error: true,
-      code: "rate_limit_exceeded",
-      message: "Rate limit exceeded. Please wait and try again.",
-      retryAfter: 1000
-    }, null, 2)
-  }],
-  isError: true
-};
-
-// Cancellation response
-return {
-  content: [{
-    type: "text",
-    text: JSON.stringify({
-      cancelled: true,
-      completed: 45,
-      remaining: 55,
-      message: "Operation cancelled. 45 emails were sent before cancellation."
-    }, null, 2)
-  }],
-  isError: false
-};
-```
-
-## Appendix C: MCP Cancellation Best Practices
-
-Per MCP specification, servers should:
-
-1. **Check for cancellation at safe points** - Before starting new operations, after async calls
-2. **Support partial results** - Return what was completed before cancellation
-3. **Clean up resources** - Ensure no leaks when cancelled mid-operation
-4. **Provide status information** - Tell the user what was/wasn't completed
-
-```typescript
-// Server-side notification handler for cancellation
-server.setNotificationHandler(
-  "notifications/cancelled",
-  async (notification) => {
-    const { requestId, reason } = notification.params;
-    // Signal the operation to stop
-    activeCancellationTokens.get(requestId)?.cancel();
-  }
+  })
 );
 ```
+
+### Coverage Targets
+
+| Category | Target | Command |
+|----------|--------|---------|
+| Overall | 80%+ | `npm run test:coverage` |
+| Critical paths | 100% | Manual verification |
+| Generated code | 70%+ | Focus on customizations |
+
+---
+
+## Build & Distribution
+
+### Build Process
+
+```bash
+# 1. Merge OpenAPI spec + overlays
+npm run merge:spec
+
+# 2. Generate server code
+npm run generate
+
+# 3. Compile TypeScript
+npm run build
+
+# 4. Run tests
+npm run test
+
+# 5. Create distributions
+npm run package:npm    # npm tarball
+npm run package:mcpb   # MCPB bundle
+```
+
+### npm Package
+
+**Package name**: `@gui-wf/resend-mcp-server` (or organization-specific)
+
+**Entry points**:
+```json
+{
+  "name": "@gui-wf/resend-mcp-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "resend-mcp": "./dist/index.js"
+  },
+  "files": ["dist/**/*"],
+  "scripts": {
+    "start": "node dist/index.js"
+  }
+}
+```
+
+**Installation**:
+```bash
+npm install -g @gui-wf/resend-mcp-server
+resend-mcp start --scope read,write
+```
+
+### MCPB Bundle
+
+**Configuration** (`.speakeasy/gen.yaml`):
+```yaml
+mcpb:
+  enabled: true
+  manifest:
+    name: "Resend MCP Server"
+    description: "Send emails, manage domains, and templates via Resend API"
+    icon: "./assets/icon.png"
+    author: "gui-wf"
+    license: "AGPL-3.0-or-later"
+```
+
+**Installation**: Drag `resend-mcp-server.mcpb` to Claude Desktop
+
+**Nix Note**: MCPB bundles are Speakeasy-specific and **cannot be built with `nix build`**. Use `npm run package:mcpb` instead. The bundle is platform-independent and works on all systems including NixOS.
+
+---
+
+## Maintenance Workflow
+
+### Regular Updates
+
+1. **Monitor Resend OpenAPI repo** for changes
+2. **Pull latest spec**: `git submodule update` or manual download
+3. **Validate spec**: `speakeasy validate -s openapi/resend.yaml`
+4. **Review changes**: `git diff openapi/resend.yaml`
+5. **Regenerate**: `npm run generate`
+6. **Run tests**: `npm run test`
+7. **Update changelog**: Document API changes
+8. **Release**: Bump version, publish
+
+### Breaking Change Detection
+
+CI workflow (`.github/workflows/spec-validation.yml`):
+```yaml
+name: OpenAPI Spec Validation
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download latest Resend spec
+        run: curl -o openapi/resend-latest.yaml https://raw.githubusercontent.com/resend/resend-openapi/main/resend.yaml
+      - name: Detect breaking changes
+        run: |
+          npx @openapitools/openapi-diff \
+            openapi/resend.yaml \
+            openapi/resend-latest.yaml \
+            --fail-on-incompatible
+      - name: Create issue if broken
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Breaking change detected in Resend OpenAPI spec',
+              body: 'The latest Resend OpenAPI spec contains breaking changes. Review and regenerate.'
+            })
+```
+
+---
+
+## Security Considerations
+
+### API Key Handling
+
+- **Never log** the full API key
+- **Validate format**: Must start with `re_`
+- **Environment only**: No hardcoded keys
+- **Rotation support**: Document key update process
+
+### Tool Safety
+
+| Tool | Risk Level | Mitigation |
+|------|------------|------------|
+| send_email | High (external action) | `openWorldHint: true`, user confirmation |
+| delete_domain | High (destructive) | `destructiveHint: true`, clear warnings |
+| list_emails | Low (read-only) | `readOnlyHint: true` |
+| create_api_key | Critical | **Excluded from generation** |
+
+### Audit Logging
+
+Add to `functions/afterResponse.ts`:
+```typescript
+export async function afterResponse(response: Response): Promise<Response> {
+  // Log all tool executions (without sensitive data)
+  if (process.env.MCP_AUDIT_LOG === 'true') {
+    await auditLog({
+      timestamp: new Date().toISOString(),
+      tool: response.headers.get('X-Tool-Name'),
+      status: response.status,
+      userId: response.headers.get('X-User-ID'),
+    });
+  }
+  return response;
+}
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### Generation Fails
+
+**Symptom**: `speakeasy generate mcp` errors
+
+**Solutions**:
+1. Validate OpenAPI spec: `speakeasy validate -s openapi/merged.yaml`
+2. Check overlay syntax errors
+3. Verify Speakeasy CLI version: `speakeasy version`
+4. Review generation logs in `.speakeasy/gen.log`
+
+#### Runtime Errors
+
+**Symptom**: Tools fail to execute
+
+**Solutions**:
+1. Verify `RESEND_API_KEY` is set and valid
+2. Check rate limiting: reduce request frequency
+3. Review API response errors in logs
+4. Test with MCP Inspector: `npm run inspector`
+
+#### Context Overflow
+
+**Symptom**: LLM can't select tools effectively
+
+**Solutions**:
+1. Use scope filtering: `--scope read`
+2. Reduce tool count via exclusions overlay
+3. Shorten tool descriptions
+4. Create tool subsets for specific use cases
+
+#### Nix-Specific Issues
+
+**Symptom**: `nix develop` fails or packages missing
+
+**Solutions**:
+1. Update flake inputs: `nix flake update`
+2. Rebuild flake.lock: `nix flake lock --update-input nixpkgs`
+3. Check Node.js version mismatch: Verify `nodejs_24` is in current nixpkgs
+4. Clear Nix cache if stale: `nix-collect-garbage -d`
+
+**Symptom**: npm commands not found in Nix shell
+
+**Solutions**:
+1. Verify you're in Nix shell: `echo $IN_NIX_SHELL` should output "impure"
+2. Reinstall node_modules: `rm -rf node_modules && npm install`
+3. Check buildInputs in flake.nix includes `nodejs_24` and `nodePackages.npm`
+
+**Symptom**: Speakeasy not found
+
+**Solutions**:
+1. Install via npm: `npm install -D @speakeasy-api/sdk`
+2. Use npx: `npx @speakeasy-api/sdk --help`
+3. Verify npm scripts work: `npm run generate --help`
+
+**Symptom**: `nix build` fails with hash mismatch
+
+**Solutions**:
+1. Get correct hash: `nix build 2>&1 | grep "got:" | awk '{print $2}'`
+2. Update npmDepsHash in flake.nix with the hash from step 1
+3. Rebuild: `nix build`
+
+---
+
+## Success Criteria
+
+### Phase 1: Foundation
+- [ ] Speakeasy CLI installed and operational
+- [ ] Resend OpenAPI spec downloaded and validated
+- [ ] Initial generation produces compilable TypeScript
+- [ ] Basic server starts successfully
+
+### Phase 2: Customization
+- [ ] All 4 overlay files created and applied
+- [ ] 25-30 tools generated with correct MCP hints
+- [ ] Scope filtering works correctly
+- [ ] Tool names follow snake_case convention
+
+### Phase 3: Integration
+- [ ] Rate limiting respects 2 req/sec
+- [ ] Error handling produces structured MCP errors
+- [ ] Tests achieve 80%+ coverage
+- [ ] MCP Inspector shows all tools correctly
+
+### Phase 4: Distribution
+- [ ] npm package installs globally
+- [ ] MCPB bundle installs in Claude Desktop
+- [ ] Documentation complete and accurate
+- [ ] Example scripts demonstrate key features
+
+---
+
+## Next Steps
+
+1. **Review this plan** with stakeholders
+2. **Install Speakeasy**: `npm install -D @speakeasy-api/sdk`
+3. **Download Resend spec**: Clone `resend/resend-openapi`
+4. **Run quickstart**: `npx speakeasy quickstart --mcp`
+5. **Create first overlay**: Start with `scopes.yaml`
+
+---
+
+## References
+
+- [Speakeasy MCP Documentation](https://www.speakeasy.com/docs/standalone-mcp)
+- [Resend OpenAPI Spec](https://github.com/resend/resend-openapi)
+- [MCP Specification](https://modelcontextprotocol.io/specification)
+- [OpenAPI Overlay Specification](https://github.com/OAI/Overlay-Specification)
+- [Speakeasy CLI Reference](https://www.speakeasy.com/docs/cli)
+
+---
+
+**Document Version**: 2.0.0
+**Last Updated**: 2026-01-16
+**Status**: Ready for implementation
