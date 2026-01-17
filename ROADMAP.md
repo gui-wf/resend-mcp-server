@@ -99,11 +99,10 @@ RESEND_API_KEY=re_xxx nix run
 **Deliverables**: Development environment ready
 
 #### 1.2 OpenAPI Spec Integration
-- [ ] Download Resend OpenAPI spec from `resend/resend-openapi`
-- [ ] Place in `openapi/resend.yaml`
-- [ ] Pin to specific Git commit/version
-- [ ] Validate spec with `speakeasy validate`
-- [ ] Document spec version in changelog
+- [ ] Download Resend OpenAPI spec: `curl -o openapi/resend.yaml https://raw.githubusercontent.com/resend/resend-openapi/main/resend.yaml`
+- [ ] Validate spec with `npx speakeasy validate -s openapi/resend.yaml`
+- [ ] Document spec version/commit SHA in changelog
+- [ ] Consider pinning to specific commit SHA for reproducibility
 
 **Deliverables**: `openapi/resend.yaml` (versioned)
 

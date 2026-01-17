@@ -42,7 +42,8 @@ echo -e "${GREEN}Merging OpenAPI spec with overlays...${NC}"
 # Check if base spec exists
 if [ ! -f "$BASE_SPEC" ]; then
   echo -e "${RED}Error: Base spec not found at $BASE_SPEC${NC}"
-  echo "Please download from https://github.com/resend/resend-openapi"
+  echo "Download with:"
+  echo "  curl -o openapi/resend.yaml https://raw.githubusercontent.com/resend/resend-openapi/main/resend.yaml"
   exit 1
 fi
 

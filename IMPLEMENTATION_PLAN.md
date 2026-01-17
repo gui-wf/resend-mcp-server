@@ -766,10 +766,11 @@ export async function afterResponse(response: Response): Promise<Response> {
 ## Next Steps
 
 1. **Review this plan** with stakeholders
-2. **Install Speakeasy**: `npm install -D @speakeasy-api/sdk`
-3. **Download Resend spec**: Clone `resend/resend-openapi`
-4. **Run quickstart**: `npx speakeasy quickstart --mcp`
-5. **Create first overlay**: Start with `scopes.yaml`
+2. **Enter Nix shell**: `nix develop`
+3. **Install npm dependencies**: `npm install`
+4. **Download Resend spec**: `curl -o openapi/resend.yaml https://raw.githubusercontent.com/resend/resend-openapi/main/resend.yaml`
+5. **Validate spec**: `npx speakeasy validate -s openapi/resend.yaml`
+6. **Create first overlay**: Start with `scopes.yaml`
 
 ---
 

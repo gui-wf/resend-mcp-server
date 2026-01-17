@@ -52,8 +52,8 @@ git diff HEAD~1 HEAD -- src/tools/emails/send-email.ts
 1. Review ROADMAP.md for phased implementation plan
 2. Review IMPLEMENTATION_PLAN.md for technical details
 3. Enter Nix development shell: `nix develop`
-4. Install Speakeasy CLI: `npm install -D @speakeasy-api/sdk`
-5. Download Resend OpenAPI spec to `openapi/resend.yaml`
+4. Install npm dependencies: `npm install` (includes Speakeasy SDK)
+5. Download Resend OpenAPI spec: `curl -o openapi/resend.yaml https://raw.githubusercontent.com/resend/resend-openapi/main/resend.yaml`
 6. Begin Phase 1: Foundation & Setup
 
 ## Key Decisions
