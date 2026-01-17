@@ -108,12 +108,17 @@ RESEND_API_KEY=re_xxx nix run
 
 #### 1.3 Tool Analysis & Curation
 - [ ] Analyze all 62 endpoints in spec
-- [ ] Identify 25-30 high-value tools
-- [ ] Create tool exclusion list (admin, rarely-used)
+- [ ] Classify tools into three tiers for dynamic loading:
+  - **Core (5-7 tools)**: Always loaded - email ops, docs search
+  - **Secondary (10-12 tools)**: Load on-demand - domains, templates, contacts
+  - **Tertiary (8-10 tools)**: Explicit request - broadcasts, batch, destructive
+- [ ] Create tool exclusion list (API keys, webhooks, rarely-used)
 - [ ] Define scope categories (read/write/admin)
-- [ ] Document tool selection rationale
+- [ ] Document tool selection and tier assignment rationale
 
-**Deliverables**: `docs/tool-curation.md`
+**Deliverables**: `docs/tool-curation.md` with three-tier classification
+
+**Token Efficiency Target**: 84-92% reduction via dynamic loading (core: ~5,000 tokens vs static: ~32,000 tokens)
 
 #### 1.4 Initial Generation
 - [ ] Run `speakeasy quickstart --mcp`
@@ -236,19 +241,42 @@ RESEND_API_KEY=re_xxx nix run
 
 **Deliverables**: `.env.example`, config docs
 
-#### 3.5 Testing Framework
+#### 3.5 Dynamic Tool Discovery Implementation
+- [ ] Implement three-tier tool classification:
+  - Core tier (5-7 tools): send_email, list_emails, get_email, list_domains, search_resend_documentation
+  - Secondary tier (10-12 tools): domain/template/contact/audience operations
+  - Tertiary tier (8-10 tools): batch operations, broadcasts, destructive ops
+- [ ] Enable MCP capability: `tools.listChanged: true` in server initialization
+- [ ] Implement tool registry with enable/disable methods
+- [ ] Add `notifications/tools/list_changed` notification mechanism
+- [ ] Create trigger mechanisms:
+  - Scope-based loading on startup
+  - On-demand loading via first tool use in a tier
+  - Explicit loading via internal registry commands
+- [ ] Integrate with existing scope filtering (read/write/admin)
+- [ ] Test dynamic tool loading and unloading
+- [ ] Validate notification delivery to MCP client
+
+**Deliverables**: Dynamic tool discovery operational, token reduction validated
+
+**Token Efficiency Target**: 84-92% reduction (core: ~5,000 tokens vs static: ~32,000 tokens)
+
+#### 3.6 Testing Framework
 - [ ] Set up vitest for generated code
 - [ ] Create integration tests for:
   - Tool execution
   - Scope filtering
   - Rate limiting
   - Error handling
+  - Dynamic tool loading/unloading
+  - Notification delivery
 - [ ] Mock Resend API responses
 - [ ] Test with MCP Inspector
+- [ ] Validate tool state transitions
 
 **Deliverables**: Test suite in `tests/`, 80%+ coverage
 
-**Risks**: Generated code incompatibility, rate limiter integration issues
+**Risks**: Generated code incompatibility, rate limiter integration issues, dynamic discovery client compatibility
 
 ---
 
@@ -381,9 +409,12 @@ RESEND_API_KEY=re_xxx nix run
 
 | Metric | Target | Tracking |
 |--------|--------|----------|
-| **Tool Coverage** | 25-30 curated tools | Spec analysis |
+| **Tool Coverage** | 25-30 curated tools (3 tiers) | Spec analysis |
+| **Core Tool Set** | 5-7 tools always loaded | Tool registry |
+| **Token Efficiency** | 84-92% reduction via dynamic loading | Context measurement |
 | **Generation Time** | < 5 minutes | CI logs |
 | **Test Coverage** | > 80% | vitest reports |
+| **Dynamic Loading Latency** | < 200ms per tier activation | Performance tests |
 | **Documentation Quality** | Complete for all tools | Manual review |
 | **npm Downloads** | 100+ monthly (if public) | npm stats |
 | **GitHub Stars** | 50+ in first month (if public) | GitHub |
@@ -412,9 +443,10 @@ RESEND_API_KEY=re_xxx nix run
 | Speakeasy breaking changes | Medium | High | Pin CLI version, test before upgrade |
 | Resend API changes | Medium | High | Automated detection, quick regeneration |
 | OpenAPI spec incompleteness | Low | Medium | Supplement with manual tools if needed |
-| Tool context overflow | Medium | Medium | Aggressive pruning, scope filtering |
+| Tool context overflow | Low | Medium | Dynamic discovery + scope filtering |
 | Rate limit issues | Low | High | Conservative limits, retry logic |
 | Generated code bugs | Medium | Medium | Comprehensive test suite |
+| Dynamic discovery client incompatibility | Low | Medium | Test with Claude Desktop and MCP Inspector |
 
 ---
 
@@ -427,6 +459,8 @@ RESEND_API_KEY=re_xxx nix run
 | 2026-01-16 | Use OpenAPI overlays | Keep base spec pristine, easier updates |
 | 2026-01-16 | Scope-based filtering | Runtime flexibility for different use cases |
 | 2026-01-16 | npm + MCPB distribution | Reach both developers and end users |
+| 2026-01-17 | Implement dynamic tool discovery | 84-92% token reduction, MCP protocol native support |
+| 2026-01-17 | Three-tier tool classification | Core/Secondary/Tertiary for progressive loading |
 
 ---
 

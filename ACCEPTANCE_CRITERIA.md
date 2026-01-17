@@ -137,6 +137,76 @@ This document defines the comprehensive acceptance criteria for the Resend MCP S
 
 ---
 
+### 1.5 Dynamic Tool Discovery
+
+#### Must Have (MCP Protocol Native)
+- [ ] Server declares `tools.listChanged: true` capability in initialize response
+- [ ] Server implements `notifications/tools/list_changed` notification
+- [ ] Tools organized into three tiers:
+  - [ ] **Tier 1 (Core)**: 5-7 tools always loaded at startup
+  - [ ] **Tier 2 (Secondary)**: 10-12 tools loaded on-demand
+  - [ ] **Tier 3 (Tertiary)**: 8-10 tools loaded on explicit request
+- [ ] Tool registry manages active/inactive tool state
+- [ ] On-demand loading triggered by first tool use in a tier
+- [ ] Scope-based pre-loading configurable via `--scope` flag
+- [ ] Notification sent to client after tier activation
+- [ ] Client compatibility tested (Claude Desktop, MCP Inspector)
+
+#### Core Tier Tools (Always Loaded)
+- [ ] `send_email` - Send single email
+- [ ] `list_emails` - List sent emails with pagination
+- [ ] `get_email` - Retrieve email by ID
+- [ ] `list_domains` - List all configured domains
+- [ ] `search_resend_documentation` - Search Resend API docs
+
+#### Secondary Tier Tools (Load on Demand)
+- [ ] Domain operations: create, verify, get, delete (4 tools)
+- [ ] Template operations: create, get, list, update (4 tools)
+- [ ] Contact operations: create, get, list, delete (4 tools)
+- [ ] Audience operations: create, get, list (3 tools)
+
+#### Tertiary Tier Tools (Explicit Request)
+- [ ] `send_batch_emails` - Batch email sending
+- [ ] `cancel_email` - Cancel scheduled email
+- [ ] `update_email` - Update scheduled email
+- [ ] Broadcast operations: create, send (2 tools)
+- [ ] Advanced/destructive operations (3-4 tools)
+
+#### Token Efficiency Targets
+- [ ] Core tier only: ~5,000 tokens (84% reduction from static)
+- [ ] Core + secondary: ~15,000 tokens (52% reduction)
+- [ ] Combined with scope filtering: ~2,400 tokens (92% reduction)
+- [ ] Tier activation latency: < 200ms
+- [ ] Notification delivery time: < 100ms
+
+#### Error Handling
+- [ ] Unknown tool requests return structured error with `isError: true`
+- [ ] Error message includes available tiers and hint to use `tools/list`
+- [ ] Tier loading failures trigger rollback (remove partially loaded tools)
+- [ ] Tier loading failures logged to stderr with context
+- [ ] Tool execution failures don't corrupt registry state
+
+#### Testing Requirements
+- [ ] Unit tests for tool registry state management
+- [ ] Integration tests for tier loading/unloading
+- [ ] E2E tests for notification delivery
+- [ ] Validate tool state transitions are correct
+- [ ] Verify no tools accessible before tier loaded
+- [ ] Verify all tools accessible after full tier load
+- [ ] Test scope-based pre-loading behavior
+- [ ] Test concurrent tier activation requests
+- [ ] Test unknown tool request error handling
+- [ ] Test tier loading failure and rollback behavior
+
+#### Success Metrics
+- Default context size (core only): < 6,000 tokens
+- Token reduction vs static: > 80%
+- Tier activation time: < 200ms
+- Notification delivery success: 100%
+- Client re-fetch after notification: > 95%
+
+---
+
 ## 2. Technical Requirements
 
 ### 2.1 Code Generation
@@ -556,22 +626,29 @@ homepage: "https://github.com/gui-wf/resend-mcp-server"
 ### 7.2 MCP Protocol Compliance
 
 #### Must Have
-- [ ] Compatible with MCP protocol version 2025-11-25 or later
+- [ ] Compatible with MCP protocol version 2025-06-18 or later
 - [ ] Proper JSON-RPC 2.0 message formatting
 - [ ] Correct error response format
 - [ ] Supports progress notifications (if applicable)
 - [ ] Handles cancellation gracefully
 - [ ] Tool results follow `CallToolResult` schema
+- [ ] **Dynamic discovery**: Declares `tools.listChanged: true` capability
+- [ ] **Dynamic discovery**: Implements `notifications/tools/list_changed` correctly
+- [ ] **Dynamic discovery**: Clients can query tools at any time (not just initialization)
 
 #### Testing
 - [ ] Tested with MCP Inspector
 - [ ] Tested with Claude Desktop
 - [ ] Protocol validator passes (if available)
+- [ ] Dynamic tool loading tested with both clients
+- [ ] Notification delivery validated
+- [ ] Tool state changes reflected in subsequent `tools/list` calls
 
 #### Success Metrics
 - MCP Inspector compatibility: 100%
 - Claude Desktop compatibility: 100%
 - Protocol violations: 0
+- Dynamic discovery notification success: 100%
 
 ---
 
