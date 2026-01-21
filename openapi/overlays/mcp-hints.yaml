@@ -1,0 +1,203 @@
+# Resend MCP Server - MCP Hints Overlay
+#
+# This overlay adds MCP-specific annotations to help AI assistants
+# understand tool behavior and safety characteristics.
+#
+# Annotations:
+# - readOnlyHint: true for operations that don't modify state
+# - destructiveHint: true for operations that delete/replace data
+# - idempotentHint: true for operations safe to retry
+# - openWorldHint: false for closed API system (Resend API only)
+#
+# Usage: Applied during merge:spec to produce openapi/merged.yaml
+#
+# AIDEV-TODO: Complete overlay implementation in Phase 2
+
+overlay: 1.0.0
+info:
+  title: Resend MCP Hints Overlay
+  version: 1.0.0
+
+actions:
+  # Read Operations - readOnlyHint: true, destructiveHint: false
+  - target: "$.paths['/emails'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/emails/{email_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/domains'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/domains/{domain_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/contacts'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/templates'].get"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: true
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  # Write Operations - readOnlyHint: false, destructiveHint: false
+  - target: "$.paths['/emails'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: true  # Sends actual emails
+
+  - target: "$.paths['/emails/batch'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: true  # Sends actual emails
+
+  - target: "$.paths['/domains'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: false
+
+  - target: "$.paths['/domains/{domain_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/domains/{domain_id}/verify'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/contacts'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: false
+
+  - target: "$.paths['/contacts/{contact_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/templates'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: false
+
+  - target: "$.paths['/broadcasts/{broadcast_id}/send'].post"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: false
+          idempotentHint: false
+          openWorldHint: true  # Sends actual emails
+
+  # Delete Operations - destructiveHint: true
+  - target: "$.paths['/domains/{domain_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: true
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/contacts/{contact_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: true
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/templates/{template_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: true
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/webhooks/{webhook_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: true
+          idempotentHint: true
+          openWorldHint: false
+
+  - target: "$.paths['/broadcasts/{broadcast_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        annotations:
+          readOnlyHint: false
+          destructiveHint: true
+          idempotentHint: true
+          openWorldHint: false

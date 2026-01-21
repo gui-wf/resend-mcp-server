@@ -1,0 +1,51 @@
+# Resend MCP Server - Exclusions Overlay
+#
+# This overlay disables endpoints that should not be exposed via MCP
+# due to security concerns or lack of utility.
+#
+# Exclusion reasons:
+# - security: Operations that could expose or modify credentials
+# - internal: Operations meant for internal use only
+# - deprecated: Operations that are being phased out
+#
+# Usage: Applied during merge:spec to produce openapi/merged.yaml
+
+overlay: 1.0.0
+info:
+  title: Resend MCP Exclusions Overlay
+  version: 1.0.0
+
+actions:
+  # API Key Operations - SECURITY RISK
+  # These endpoints could expose API keys or allow credential manipulation
+  - target: "$.paths['/api-keys']"
+    update:
+      get:
+        x-speakeasy-mcp:
+          disabled: true
+          reason: "Security - API key listing could expose credentials"
+      post:
+        x-speakeasy-mcp:
+          disabled: true
+          reason: "Security - API key creation could enable privilege escalation"
+
+  - target: "$.paths['/api-keys/{api_key_id}']"
+    update:
+      delete:
+        x-speakeasy-mcp:
+          disabled: true
+          reason: "Security - API key deletion could disrupt production systems"
+
+  # Webhook Secret Operations - SECURITY RISK
+  # Webhook secrets are sensitive and should not be exposed
+  # AIDEV-NOTE: Check if Resend has a dedicated webhook secret endpoint
+  # If so, add exclusion here
+
+  # Future exclusions can be added here as needed
+  # Example format:
+  # - target: "$.paths['/internal/debug']"
+  #   update:
+  #     get:
+  #       x-speakeasy-mcp:
+  #         disabled: true
+  #         reason: "Internal - Debug endpoint not for production use"

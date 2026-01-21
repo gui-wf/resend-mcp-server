@@ -1,0 +1,334 @@
+# Resend MCP Server - Descriptions Overlay
+#
+# This overlay provides LLM-optimized descriptions for tools.
+# Descriptions follow the token optimization guidelines:
+# - 80-150 characters optimal length
+# - Focus on what, not how
+# - Mention key constraints
+# - Avoid duplicating parameter info
+#
+# Usage: Applied during merge:spec to produce openapi/merged.yaml
+#
+# AIDEV-TODO: Complete overlay implementation in Phase 2
+
+overlay: 1.0.0
+info:
+  title: Resend MCP Descriptions Overlay
+  version: 1.0.0
+
+actions:
+  # Core Tier Tools - Most commonly used, optimized descriptions
+  - target: "$.paths['/emails'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: send_email
+        tier: core
+        description: "Send an email via Resend API. Requires verified sender domain."
+
+  - target: "$.paths['/emails'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_emails
+        tier: core
+        description: "List sent emails with pagination. Returns delivery status and metadata."
+
+  - target: "$.paths['/emails/{email_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_email
+        tier: core
+        description: "Get details of a single email by ID including status and timestamps."
+
+  - target: "$.paths['/domains'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_domains
+        tier: core
+        description: "List all domains with verification status and DNS records."
+
+  # Secondary Tier Tools - CRUD operations
+  - target: "$.paths['/emails/batch'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: send_batch_emails
+        tier: tertiary
+        description: "Send up to 100 emails in one request. Use for bulk transactional emails."
+
+  - target: "$.paths['/emails/{email_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_email
+        tier: secondary
+        description: "Update a scheduled email before it is sent."
+
+  - target: "$.paths['/emails/{email_id}/cancel'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: cancel_email
+        tier: secondary
+        description: "Cancel a scheduled email. Only works before send time."
+
+  - target: "$.paths['/domains'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_domain
+        tier: secondary
+        description: "Add a new domain to Resend. Returns DNS records for verification."
+
+  - target: "$.paths['/domains/{domain_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_domain
+        tier: secondary
+        description: "Get domain details including DNS records and verification status."
+
+  - target: "$.paths['/domains/{domain_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_domain
+        tier: secondary
+        description: "Update domain settings like click tracking or open tracking."
+
+  - target: "$.paths['/domains/{domain_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_domain
+        tier: tertiary
+        description: "Permanently delete a domain. This action cannot be undone."
+
+  - target: "$.paths['/domains/{domain_id}/verify'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: verify_domain
+        tier: secondary
+        description: "Trigger DNS verification for a domain. Check status after."
+
+  # Contact Operations
+  - target: "$.paths['/contacts'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_contacts
+        tier: secondary
+        description: "List all contacts with pagination. Returns email and metadata."
+
+  - target: "$.paths['/contacts'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_contact
+        tier: secondary
+        description: "Add a contact to an audience for broadcasts and campaigns."
+
+  - target: "$.paths['/contacts/{contact_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_contact
+        tier: secondary
+        description: "Get a single contact by ID including custom properties."
+
+  - target: "$.paths['/contacts/{contact_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_contact
+        tier: secondary
+        description: "Update contact details like name or custom properties."
+
+  - target: "$.paths['/contacts/{contact_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_contact
+        tier: tertiary
+        description: "Permanently delete a contact. Cannot be undone."
+
+  # Template Operations
+  - target: "$.paths['/templates'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_templates
+        tier: secondary
+        description: "List all email templates. Only published templates can be used."
+
+  - target: "$.paths['/templates'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_template
+        tier: secondary
+        description: "Create a new email template with optional variables."
+
+  - target: "$.paths['/templates/{template_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_template
+        tier: secondary
+        description: "Get template content, variables, and publish status."
+
+  - target: "$.paths['/templates/{template_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_template
+        tier: secondary
+        description: "Update template content. Republish required after changes."
+
+  - target: "$.paths['/templates/{template_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_template
+        tier: tertiary
+        description: "Permanently delete a template. Cannot be undone."
+
+  - target: "$.paths['/templates/{template_id}/publish'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: publish_template
+        tier: secondary
+        description: "Publish a template to make it available for sending."
+
+  - target: "$.paths['/templates/{template_id}/duplicate'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: duplicate_template
+        tier: secondary
+        description: "Create a copy of an existing template."
+
+  # Topic Operations
+  - target: "$.paths['/topics'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_topics
+        tier: secondary
+        description: "List all email topics for subscription management."
+
+  - target: "$.paths['/topics'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_topic
+        tier: secondary
+        description: "Create a topic to segment audience subscriptions."
+
+  - target: "$.paths['/topics/{topic_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_topic
+        tier: tertiary
+        description: "Get topic details by ID."
+
+  - target: "$.paths['/topics/{topic_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_topic
+        tier: tertiary
+        description: "Update topic name or default subscription."
+
+  - target: "$.paths['/topics/{topic_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_topic
+        tier: tertiary
+        description: "Permanently delete a topic. Cannot be undone."
+
+  # Webhook Operations
+  - target: "$.paths['/webhooks'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_webhooks
+        tier: secondary
+        description: "List all configured webhooks for email events."
+
+  - target: "$.paths['/webhooks'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_webhook
+        tier: secondary
+        description: "Create a webhook to receive email event notifications."
+
+  - target: "$.paths['/webhooks/{webhook_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_webhook
+        tier: tertiary
+        description: "Get webhook configuration by ID."
+
+  - target: "$.paths['/webhooks/{webhook_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_webhook
+        tier: secondary
+        description: "Update webhook URL or event subscriptions."
+
+  - target: "$.paths['/webhooks/{webhook_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_webhook
+        tier: tertiary
+        description: "Delete a webhook. No more events will be sent."
+
+  # Broadcast Operations
+  - target: "$.paths['/broadcasts'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_broadcasts
+        tier: tertiary
+        description: "List all broadcasts (marketing campaigns)."
+
+  - target: "$.paths['/broadcasts'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_broadcast
+        tier: tertiary
+        description: "Create a broadcast to send to an audience."
+
+  - target: "$.paths['/broadcasts/{broadcast_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_broadcast
+        tier: tertiary
+        description: "Get broadcast details and delivery statistics."
+
+  - target: "$.paths['/broadcasts/{broadcast_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        tool-name: update_broadcast
+        tier: tertiary
+        description: "Update broadcast content before sending."
+
+  - target: "$.paths['/broadcasts/{broadcast_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_broadcast
+        tier: tertiary
+        description: "Delete a broadcast. Cannot be undone."
+
+  - target: "$.paths['/broadcasts/{broadcast_id}/send'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: send_broadcast
+        tier: tertiary
+        description: "Send a broadcast to its target audience. Irreversible."
+
+  # Segment Operations
+  - target: "$.paths['/segments'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: list_segments
+        tier: tertiary
+        description: "List all contact segments."
+
+  - target: "$.paths['/segments'].post"
+    update:
+      x-speakeasy-mcp:
+        tool-name: create_segment
+        tier: tertiary
+        description: "Create a segment to group contacts."
+
+  - target: "$.paths['/segments/{segment_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        tool-name: get_segment
+        tier: tertiary
+        description: "Get segment details by ID."
+
+  - target: "$.paths['/segments/{segment_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        tool-name: delete_segment
+        tier: tertiary
+        description: "Delete a segment. Contacts are not affected."

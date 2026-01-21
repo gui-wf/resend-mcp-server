@@ -21,7 +21,8 @@
     "validate": "speakeasy validate -s openapi/resend.yaml",
     "merge:spec": "bash scripts/merge-openapi.sh",
     "package:npm": "npm pack",
-    "package:mcpb": "speakeasy generate mcp -s openapi/merged.yaml --mcpb"
+    "package:mcpb": "speakeasy generate mcp -s openapi/merged.yaml --mcpb",
+    "build:embeddings": "tsx scripts/build-embeddings.ts"
   },
   "keywords": [
     "mcp",
@@ -43,11 +44,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@xenova/transformers": "^2.17.0",
     "zod": "^3.23.0",
     "zod-validation-error": "^3.3.0"
   },
   "devDependencies": {
-    "@speakeasy-api/sdk": "^1.0.0",
     "@stoplight/spectral-cli": "^6.0.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",

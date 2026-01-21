@@ -1,0 +1,199 @@
+# Resend MCP Server - Scopes Overlay
+#
+# This overlay assigns scope tags (read, write, admin) to each endpoint
+# for use with the --scope CLI flag.
+#
+# Scope definitions:
+# - read: GET operations that do not modify state
+# - write: POST, PUT, PATCH operations that create or modify resources
+# - admin: DELETE operations and other destructive/sensitive actions
+#
+# Usage: Applied during merge:spec to produce openapi/merged.yaml
+#
+# AIDEV-TODO: Complete overlay implementation in Phase 2
+
+overlay: 1.0.0
+info:
+  title: Resend MCP Scopes Overlay
+  version: 1.0.0
+
+actions:
+  # Email Operations
+  - target: "$.paths['/emails'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/emails'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/{email_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/{email_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/emails/batch'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/emails/{email_id}/cancel'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  # Domain Operations
+  - target: "$.paths['/domains'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/domains'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/domains/{domain_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/domains/{domain_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/domains/{domain_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  - target: "$.paths['/domains/{domain_id}/verify'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  # Contact Operations
+  - target: "$.paths['/contacts'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/contacts'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/contacts/{contact_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/contacts/{contact_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/contacts/{contact_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # Template Operations
+  - target: "$.paths['/templates'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/templates'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/templates/{template_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/templates/{template_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/templates/{template_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # Webhook Operations
+  - target: "$.paths['/webhooks'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/webhooks'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/webhooks/{webhook_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # Broadcast Operations
+  - target: "$.paths['/broadcasts'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/broadcasts'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/broadcasts/{broadcast_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  - target: "$.paths['/broadcasts/{broadcast_id}/send'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write

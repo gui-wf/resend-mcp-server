@@ -1,0 +1,9 @@
+# Data directory for embeddings and other generated data files
+#
+# This directory will contain:
+# - embeddings.json: Pre-computed documentation embeddings for search
+#
+# Generated via: npm run build:embeddings
+#
+# AIDEV-NOTE: embeddings.json should be committed to the repository
+# so that users don't need to regenerate it on install.

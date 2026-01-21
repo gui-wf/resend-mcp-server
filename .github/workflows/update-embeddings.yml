@@ -1,0 +1,60 @@
+name: "Update Embeddings"
+
+on:
+  # Weekly schedule - every Monday at 00:00 UTC
+  schedule:
+    - cron: "0 0 * * 1"
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-embeddings:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate embeddings
+        run: npm run build:embeddings
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet data/embeddings.json 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update documentation embeddings"
+          title: "chore: Update documentation embeddings"
+          body: |
+            This PR updates the documentation embeddings index.
+
+            Changes detected in Resend documentation at https://resend.com/docs/llms-full.txt
+
+            The embeddings have been regenerated to reflect the latest documentation.
+          branch: auto/update-embeddings
+          delete-branch: true
+          labels: |
+            documentation
+            automated
