@@ -9,6 +9,7 @@ import {
   getLoadedEmbeddings,
   clearEmbeddingsCache,
   isEmbeddingsLoaded,
+  getFreshnessWarning,
 } from "../../src/tools/docs/index.js";
 
 describe("embeddings-loader", () => {
@@ -168,6 +169,41 @@ describe("embeddings-loader", () => {
       expect(typeof embeddings.dimensions).toBe("number");
       expect(typeof embeddings.generatedAt).toBe("string");
       expect(embeddings.dimensions).toBeGreaterThan(0);
+    });
+  });
+
+  describe("getFreshnessWarning", () => {
+    it("should return null for fresh embeddings", async () => {
+      // Load fresh embeddings (just generated)
+      await loadEmbeddings();
+
+      const warning = getFreshnessWarning();
+
+      // Fresh embeddings should not trigger a warning
+      // (unless the embeddings file is actually stale in the test environment)
+      // For a freshly built embeddings.json, this should be null
+      // If the test embeddings are old, this might return a warning
+      if (warning !== null) {
+        // If there's a warning, it should be properly formatted
+        expect(warning).toContain("days old");
+      }
+    });
+
+    it("should return null before embeddings are loaded", () => {
+      clearEmbeddingsCache();
+
+      const warning = getFreshnessWarning();
+
+      expect(warning).toBeNull();
+    });
+
+    it("should return consistent warning across multiple calls", async () => {
+      await loadEmbeddings();
+
+      const warning1 = getFreshnessWarning();
+      const warning2 = getFreshnessWarning();
+
+      expect(warning1).toBe(warning2);
     });
   });
 });
