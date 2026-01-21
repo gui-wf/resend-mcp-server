@@ -47,7 +47,7 @@ describe("cosineSimilarity", () => {
     const vectorB = [1, 2];
 
     expect(() => cosineSimilarity(vectorA, vectorB)).toThrow(
-      "Vector dimension mismatch: 3 vs 2"
+      "Vector dimension mismatch: query has 3 dimensions, stored embedding has 2"
     );
   });
 

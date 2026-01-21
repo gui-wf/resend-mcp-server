@@ -1,0 +1,63 @@
+# Source files (TypeScript)
+src/
+*.ts
+!*.d.ts
+
+# Development and build config
+tsconfig.json
+vitest.config.ts
+.eslintrc*
+eslint.config.*
+.prettierrc*
+
+# Scripts and tools
+scripts/
+openapi/
+
+# Documentation sources
+docs/
+
+# Tests
+tests/
+**/*.test.ts
+**/*.spec.ts
+__tests__/
+coverage/
+
+# CI/CD
+.github/
+
+# Environment and secrets
+.env
+.env.*
+*.local
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Speakeasy
+.speakeasy/
+
+# Auto-generated development files
+.auto-claude/
+
+# Node modules (redundant but explicit)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Development data (embeddings are included via files array)
+# data/ is NOT excluded - embeddings.json is needed
+
+# Package files
+*.tgz

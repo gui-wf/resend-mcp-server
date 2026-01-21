@@ -18,12 +18,39 @@ export type {
   ScoredChunk,
 } from "./types.js";
 
+// Error handling
+export {
+  DocsErrorCode,
+  createDocsError,
+  isDocsError,
+  toDocsError,
+  formatErrorResponse,
+  type DocsError,
+} from "./errors.js";
+
+// Metrics
+export {
+  recordSearch,
+  recordSearchError,
+  recordModelLoaded,
+  recordEmbeddingsLoaded,
+  setEmbeddingsCacheStatus,
+  getSearchStats,
+  clearMetricsHistory,
+  getHistorySize,
+  type SearchMetrics,
+  type MetricType,
+} from "./metrics.js";
+
 // Utilities for testing/debugging
 export {
   loadEmbeddings,
   getLoadedEmbeddings,
   clearEmbeddingsCache,
   isEmbeddingsLoaded,
+  getFreshnessWarning,
+  EXPECTED_SCHEMA_VERSION,
+  EXPECTED_DIMENSIONS,
 } from "./embeddings-loader.js";
 
 export {
@@ -32,4 +59,5 @@ export {
   cosineSimilarity,
   truncateToTokenBudget,
   getEmbeddingsStats,
+  loadEmbedder,
 } from "./vector-search.js";

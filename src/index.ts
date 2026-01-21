@@ -9,7 +9,7 @@
  * The actual server implementation will be generated using Speakeasy in Phase 2.
  *
  * @module resend-mcp-server
- * @version 0.1.0
+ * @version 1.0.0
  * @license AGPL-3.0-or-later
  */
 
@@ -51,7 +51,7 @@ function createServer(): Server {
   const server = new Server(
     {
       name: "resend-mcp-server",
-      version: "0.1.0",
+      version: "1.0.0",
     },
     {
       capabilities: {
@@ -169,7 +169,7 @@ function createServer(): Server {
  * Main entry point
  */
 async function main(): Promise<void> {
-  log("Starting Resend MCP Server (Phase 1 Placeholder)");
+  log("Starting Resend MCP Server v1.0.0");
 
   // Validate environment
   validateEnvironment();

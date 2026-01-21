@@ -1,58 +1,58 @@
 # Resend MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for the [Resend](https://resend.com) email API. This server enables AI assistants to manage emails, domains, templates, contacts, and more through a standardized interface.
+A comprehensive [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server for the [Resend](https://resend.com) email API. Enables AI assistants like Claude to send emails, manage domains, contacts, audiences, and more through a standardized interface.
 
 ## Disclaimer
 
 **This is an unofficial, community-developed project.** It is not affiliated with, endorsed by, or supported by Resend. Use at your own risk.
 
-## Features
+## Quick Start
 
-- Send emails (single and batch)
-- Manage email domains
-- Create and manage contacts and audiences
-- Handle email templates
-- Retrieve email delivery information
-- API key management
-
-## Installation
+### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/gui-wf/resend-mcp-server.git
-cd resend-mcp-server
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
+npm install resend-mcp-server
 ```
 
-## Configuration
-
-Set the `RESEND_API_KEY` environment variable with your Resend API key:
+Or install globally:
 
 ```bash
-export RESEND_API_KEY=re_your_api_key_here
+npm install -g resend-mcp-server
 ```
 
-You can obtain an API key from the [Resend Dashboard](https://resend.com/api-keys).
+### Claude Desktop Configuration
 
-## Usage
+Add the following to your Claude Desktop configuration file:
 
-### Running the Server
-
-```bash
-npm run dev    # Development mode
-npm start      # Production mode
-```
-
-### MCP Client Configuration
-
-Add the following to your MCP client configuration:
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 ```json
+{
+  "mcpServers": {
+    "resend": {
+      "command": "npx",
+      "args": ["resend-mcp-server"],
+      "env": {
+        "RESEND_API_KEY": "re_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Get your API key from the [Resend Dashboard](https://resend.com/api-keys).
+
+### Alternative: Run from Source
+
+```bash
+git clone https://github.com/gui-wf/resend-mcp-server.git
+cd resend-mcp-server
+npm install
+npm run build
+
+# Add to Claude Desktop config:
 {
   "mcpServers": {
     "resend": {
@@ -66,22 +66,152 @@ Add the following to your MCP client configuration:
 }
 ```
 
-### Available Tools
+## Available Tools
 
-*Documentation coming soon...*
+### Core Tools (Always Available)
+
+| Tool | Description |
+|------|-------------|
+| `send_email` | Send a single email via Resend API |
+| `get_email` | Retrieve email details by ID |
+| `list_domains` | List all verified domains for the account |
+| `search_resend_documentation` | Search Resend API documentation with semantic search |
+
+### Secondary Tools
+
+| Tool | Description |
+|------|-------------|
+| `batch_send_email` | Send multiple emails in a single request |
+| `create_domain` | Register a new email domain |
+| `verify_domain` | Initiate domain verification process |
+| `list_emails` | List sent emails with pagination |
+| `get_domain` | Get details for a specific domain |
+
+### Tertiary Tools (Advanced/Admin)
+
+| Tool | Description |
+|------|-------------|
+| `delete_domain` | Delete a domain from the account |
+| `update_domain` | Update domain settings |
+| `list_contacts` | List contacts in an audience |
+| `create_contact` | Create a new contact |
+| `get_contact` | Get contact details |
+| `update_contact` | Update contact information |
+| `delete_contact` | Delete a contact |
+| `list_audiences` | List all audiences |
+| `create_audience` | Create a new audience |
+| `get_audience` | Get audience details |
+| `delete_audience` | Delete an audience |
+| `list_api_keys` | List API keys (names only) |
+| `create_api_key` | Create a new API key |
+| `delete_api_key` | Delete an API key |
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `RESEND_API_KEY` | Yes | - | Your Resend API key (must start with `re_`) |
+| `RESEND_MCP_DEFAULT_TIER` | No | `core` | Default tool tier: `core`, `secondary`, `tertiary`, or `all` |
+| `RESEND_MCP_SCOPES` | No | All | Comma-separated scopes: `read`, `write`, `admin` |
+| `RESEND_RATE_LIMIT_MS` | No | `500` | Minimum milliseconds between API requests |
+| `RESEND_DEBUG` | No | `false` | Enable debug logging (`true`, `1`, or `yes`) |
+
+### Tool Tiers
+
+Tools are organized into tiers for token efficiency:
+
+- **Core**: Essential tools for basic email operations (4 tools)
+- **Secondary**: Common additional features (5 tools)
+- **Tertiary**: Advanced and administrative features (14 tools)
+
+Configure the default tier based on your use case:
+
+```json
+{
+  "env": {
+    "RESEND_API_KEY": "re_...",
+    "RESEND_MCP_DEFAULT_TIER": "secondary"
+  }
+}
+```
+
+### Scope-Based Access Control
+
+Restrict tool access by operation type:
+
+- **read**: Tools that only retrieve data
+- **write**: Tools that create or modify resources
+- **admin**: Tools for administrative operations
+
+```json
+{
+  "env": {
+    "RESEND_API_KEY": "re_...",
+    "RESEND_MCP_SCOPES": "read,write"
+  }
+}
+```
 
 ## Development
 
+### Prerequisites
+
+- Node.js >= 20.0.0
+- npm or pnpm
+- (Optional) Nix for reproducible environment
+
+### Setup with Nix
+
 ```bash
-# Enter Nix development shell (if using Nix)
+# Enter development shell (auto-installs dependencies)
 nix develop
+```
 
-# Run tests
-npm test
+### Setup without Nix
 
-# Run MCP Inspector for debugging
+```bash
+npm install
+```
+
+### Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Run server with hot reload |
+| `npm run build` | Compile TypeScript to dist/ |
+| `npm run inspector` | Debug with MCP Inspector |
+| `npm test` | Run test suite |
+| `npm run test:run` | Run tests once (CI mode) |
+| `npm run typecheck` | Validate TypeScript types |
+| `npm run lint` | Run ESLint |
+| `npm run build:embeddings` | Rebuild documentation embeddings |
+
+### Testing with MCP Inspector
+
+The MCP Inspector provides an interactive UI for testing tools:
+
+```bash
 npm run inspector
 ```
+
+This opens a web interface where you can:
+- View all available tools
+- Test tool execution with custom inputs
+- Inspect request/response payloads
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed documentation on:
+- Project structure
+- Component interactions
+- Data flow
+- Customization points
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for solutions to common issues.
 
 ## License
 
@@ -92,5 +222,6 @@ See the [LICENSE](LICENSE) file for details.
 ## Links
 
 - [Resend API Documentation](https://resend.com/docs/api-reference/introduction)
-- [Model Context Protocol](https://modelcontextprotocol.io)
+- [Model Context Protocol Specification](https://modelcontextprotocol.io/docs)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [Changelog](CHANGELOG.md)

@@ -5,9 +5,19 @@
 
 import type { ScoredChunk } from "./types.js";
 import { loadEmbeddings } from "./embeddings-loader.js";
+import { createDocsError, DocsErrorCode } from "./errors.js";
 
 // AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[docs-search] ${message}`);
+
+/** Timeout for model loading in milliseconds (2 minutes) */
+const MODEL_LOAD_TIMEOUT_MS = 120000;
+
+/** Maximum retry attempts for model loading */
+const MODEL_LOAD_MAX_RETRIES = 2;
+
+/** Delay between retry attempts in milliseconds */
+const MODEL_LOAD_RETRY_DELAY_MS = 1000;
 
 /**
  * Type definition for the transformer pipeline.
@@ -25,8 +35,56 @@ let embedderPipeline: Pipeline | null = null;
 let embedderLoadingPromise: Promise<Pipeline> | null = null;
 
 /**
+ * Helper to create a timeout promise.
+ *
+ * @param ms - Timeout in milliseconds
+ * @param operation - Description of the operation for error message
+ * @returns Promise that rejects after timeout
+ */
+function createTimeout(ms: number, operation: string): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(
+        createDocsError(
+          DocsErrorCode.NETWORK_TIMEOUT,
+          `${operation} timed out after ${ms}ms`
+        )
+      );
+    }, ms);
+  });
+}
+
+/**
+ * Helper to delay execution.
+ *
+ * @param ms - Delay in milliseconds
+ * @returns Promise that resolves after delay
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Internal function to load the model without retry logic.
+ *
+ * @returns Promise resolving to the embedding pipeline
+ */
+async function loadModelInternal(): Promise<Pipeline> {
+  // Dynamic import to avoid loading the heavy transformers library until needed
+  const { pipeline } = await import("@xenova/transformers");
+
+  const extractor = await pipeline(
+    "feature-extraction",
+    "Xenova/all-MiniLM-L6-v2"
+  );
+
+  return extractor as Pipeline;
+}
+
+/**
  * Load the embedding model (Xenova/all-MiniLM-L6-v2).
  * Lazy loads on first call and caches for subsequent use.
+ * Includes timeout and retry logic for robustness.
  *
  * @returns Promise resolving to the embedding pipeline function
  */
@@ -43,25 +101,56 @@ export async function loadEmbedder(): Promise<Pipeline> {
   const startTime = Date.now();
 
   embedderLoadingPromise = (async () => {
-    try {
-      // Dynamic import to avoid loading the heavy transformers library until needed
-      const { pipeline } = await import("@xenova/transformers");
+    let lastError: Error | null = null;
 
-      const extractor = await pipeline(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2"
-      );
+    for (let attempt = 0; attempt <= MODEL_LOAD_MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        log(`Retrying model load (attempt ${attempt + 1}/${MODEL_LOAD_MAX_RETRIES + 1})...`);
+        await delay(MODEL_LOAD_RETRY_DELAY_MS);
+      }
 
-      const loadTime = Date.now() - startTime;
-      log(`Embedding model loaded in ${loadTime}ms`);
+      try {
+        // Race between model loading and timeout
+        const extractor = await Promise.race([
+          loadModelInternal(),
+          createTimeout(MODEL_LOAD_TIMEOUT_MS, "Model loading"),
+        ]);
 
-      embedderPipeline = extractor as Pipeline;
-      embedderLoadingPromise = null;
-      return embedderPipeline;
-    } catch (error) {
-      embedderLoadingPromise = null;
-      throw error;
+        const loadTime = Date.now() - startTime;
+        log(`Embedding model loaded in ${loadTime}ms`);
+
+        embedderPipeline = extractor;
+        embedderLoadingPromise = null;
+        return embedderPipeline;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        log(`Model load attempt ${attempt + 1} failed: ${lastError.message}`);
+
+        // If it's a timeout or network error, retry
+        // If it's a different error (e.g., invalid model), don't retry
+        const isRetryable =
+          lastError.message.includes("timeout") ||
+          lastError.message.includes("ETIMEDOUT") ||
+          lastError.message.includes("ECONNRESET") ||
+          lastError.message.includes("fetch");
+
+        if (!isRetryable || attempt >= MODEL_LOAD_MAX_RETRIES) {
+          break;
+        }
+      }
     }
+
+    embedderLoadingPromise = null;
+
+    // Convert to DocsError if not already
+    if (lastError && "code" in lastError) {
+      throw lastError;
+    }
+
+    throw createDocsError(
+      DocsErrorCode.MODEL_LOAD_FAILURE,
+      `Failed to load embedding model after ${MODEL_LOAD_MAX_RETRIES + 1} attempts: ${lastError?.message ?? "Unknown error"}`
+    );
   })();
 
   return embedderLoadingPromise;
@@ -95,7 +184,10 @@ export async function embedQuery(query: string): Promise<number[]> {
  */
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
-    throw new Error(`Vector dimension mismatch: ${a.length} vs ${b.length}`);
+    throw createDocsError(
+      DocsErrorCode.DIMENSION_MISMATCH,
+      `Vector dimension mismatch: query has ${a.length} dimensions, stored embedding has ${b.length}`
+    );
   }
 
   let dotProduct = 0;

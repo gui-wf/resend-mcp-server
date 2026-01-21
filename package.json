@@ -1,12 +1,25 @@
 {
   "name": "resend-mcp-server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Comprehensive MCP Server for Resend API - manage emails, domains, templates, contacts, and more via AI assistants",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "resend-mcp-server": "dist/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "data/embeddings.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
@@ -22,16 +35,19 @@
     "merge:spec": "bash scripts/merge-openapi.sh",
     "package:npm": "npm pack",
     "package:mcpb": "speakeasy generate mcp -s openapi/merged.yaml --mcpb",
-    "build:embeddings": "tsx scripts/build-embeddings.ts"
+    "build:embeddings": "tsx scripts/build-embeddings.ts",
+    "build:embeddings:force": "tsx scripts/build-embeddings.ts --force",
+    "prepublishOnly": "npm run typecheck && npm run test:run && npm run build"
   },
   "keywords": [
     "mcp",
     "resend",
     "email",
-    "ai",
     "claude",
+    "typescript",
     "model-context-protocol",
-    "typescript"
+    "ai-assistant",
+    "email-api"
   ],
   "author": "gui-wf",
   "license": "AGPL-3.0-or-later",
@@ -39,8 +55,12 @@
     "type": "git",
     "url": "https://github.com/gui-wf/resend-mcp-server.git"
   },
+  "bugs": {
+    "url": "https://github.com/gui-wf/resend-mcp-server/issues"
+  },
+  "homepage": "https://github.com/gui-wf/resend-mcp-server#readme",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

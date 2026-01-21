@@ -3,7 +3,9 @@
  * Builds embeddings index from Resend documentation.
  * Fetches docs, chunks content, generates embeddings, and saves to data/embeddings.json.
  *
- * Usage: npm run build:embeddings
+ * Usage:
+ *   npm run build:embeddings        - Build with cache check (skip if unchanged)
+ *   npm run build:embeddings:force  - Force rebuild regardless of cache
  */
 
 import { createHash } from "node:crypto";
@@ -16,6 +18,10 @@ import type { DocumentChunk, EmbeddingsIndex } from "./types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Parse command-line arguments
+const args = process.argv.slice(2);
+const forceRebuild = args.includes("--force") || args.includes("-f");
 
 // Configuration
 const DOCS_URL = "https://resend.com/docs/llms-full.txt";
@@ -157,6 +163,10 @@ async function main(): Promise<void> {
   console.error("[build-embeddings] Starting embedding generation...");
   console.error(`[build-embeddings] Output: ${OUTPUT_FILE}`);
 
+  if (forceRebuild) {
+    console.error("[build-embeddings] Force rebuild requested - skipping cache check");
+  }
+
   // Ensure output directory exists
   if (!existsSync(OUTPUT_DIR)) {
     mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -168,8 +178,8 @@ async function main(): Promise<void> {
   const sourceHash = computeHash(documentation);
   console.error(`[build-embeddings] Source hash: ${sourceHash}`);
 
-  // Check cache
-  if (checkCacheValidity(sourceHash)) {
+  // Check cache (skip if force rebuild)
+  if (!forceRebuild && checkCacheValidity(sourceHash)) {
     console.error("[build-embeddings] Using cached embeddings - done!");
     return;
   }

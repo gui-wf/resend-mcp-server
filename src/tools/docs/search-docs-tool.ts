@@ -4,8 +4,11 @@
  */
 
 import { z } from "zod";
-import type { SearchResult, SearchResponse, SearchErrorResponse } from "./types.js";
+import type { SearchResult, SearchResponse } from "./types.js";
 import { semanticSearch, keywordSearch, truncateToTokenBudget } from "./vector-search.js";
+import { isEmbeddingsLoaded, getFreshnessWarning } from "./embeddings-loader.js";
+import { toDocsError, formatErrorResponse } from "./errors.js";
+import { recordSearch, recordSearchError, setEmbeddingsCacheStatus } from "./metrics.js";
 
 // AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[docs-search] ${message}`);
@@ -102,6 +105,8 @@ export async function execute(args: unknown): Promise<{
   content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
 }> {
+  const startTime = Date.now();
+
   // Validate input
   const parseResult = inputSchema.safeParse(args);
 
@@ -110,20 +115,36 @@ export async function execute(args: unknown): Promise<{
       .map((e) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
 
-    const errorResponse: SearchErrorResponse = {
-      error: true,
-      message: `Invalid input: ${errorMessage}`,
-      hint: "Provide a 'query' string (3-500 chars) and optional 'limit' (1-10)",
-    };
+    const latencyMs = Date.now() - startTime;
+    recordSearchError(latencyMs, "VALIDATION_ERROR", { errors: parseResult.error.errors });
 
     return {
-      content: [{ type: "text", text: JSON.stringify(errorResponse, null, 2) }],
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              error: true,
+              code: "VALIDATION_ERROR",
+              message: `Invalid input: ${errorMessage}`,
+              hint: "Provide a 'query' string (3-500 chars) and optional 'limit' (1-10)",
+              recoverable: false,
+            },
+            null,
+            2
+          ),
+        },
+      ],
       isError: true,
     };
   }
 
   const input: SearchInput = parseResult.data;
   log(`Searching documentation: "${input.query}" (limit: ${input.limit})`);
+
+  // Track cache status for metrics
+  const wasCached = isEmbeddingsLoaded();
+  setEmbeddingsCacheStatus(wasCached);
 
   try {
     // Try semantic search first
@@ -147,6 +168,9 @@ export async function execute(args: unknown): Promise<{
         searchType = "keyword";
       } else if (results.length === 0) {
         // No results from either search
+        const latencyMs = Date.now() - startTime;
+        recordSearch(latencyMs, 0, "keyword", wasCached);
+
         const noResultsResponse: SearchResponse = {
           query: input.query,
           searchType: "keyword",
@@ -174,8 +198,15 @@ export async function execute(args: unknown): Promise<{
     // Calculate total tokens
     const totalTokens = searchResults.reduce((sum, r) => sum + r.tokenCount, 0);
 
+    // Record successful search metrics
+    const latencyMs = Date.now() - startTime;
+    recordSearch(latencyMs, searchResults.length, searchType, wasCached);
+
+    // Check for freshness warning
+    const freshnessWarning = getFreshnessWarning();
+
     // Build response
-    const response: SearchResponse = {
+    const response: SearchResponse & { warning?: string } = {
       query: input.query,
       searchType,
       resultCount: searchResults.length,
@@ -183,27 +214,31 @@ export async function execute(args: unknown): Promise<{
       results: searchResults,
     };
 
+    // Add freshness warning if present
+    if (freshnessWarning) {
+      response.warning = freshnessWarning;
+    }
+
     log(
-      `Search complete: ${searchResults.length} results, ${totalTokens} tokens, type: ${searchType}`
+      `Search complete: ${searchResults.length} results, ${totalTokens} tokens, type: ${searchType}, latency: ${latencyMs}ms`
     );
 
     return {
       content: [{ type: "text", text: JSON.stringify(response, null, 2) }],
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log(`Search error: ${errorMessage}`);
+    const latencyMs = Date.now() - startTime;
 
-    const errorResponse: SearchErrorResponse = {
-      error: true,
-      message: `Search failed: ${errorMessage}`,
-      hint: errorMessage.includes("embeddings")
-        ? "Run 'npm run build:embeddings' to generate the embeddings index"
-        : "Check server logs for details",
-    };
+    // Convert to structured DocsError
+    const docsError = toDocsError(error);
+
+    log(`Search error [${docsError.code}]: ${docsError.message}`);
+
+    // Record error metrics
+    recordSearchError(latencyMs, docsError.code, { message: docsError.message });
 
     return {
-      content: [{ type: "text", text: JSON.stringify(errorResponse, null, 2) }],
+      content: [{ type: "text", text: JSON.stringify(formatErrorResponse(docsError), null, 2) }],
       isError: true,
     };
   }
