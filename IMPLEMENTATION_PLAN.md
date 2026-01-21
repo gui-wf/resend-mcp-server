@@ -1025,12 +1025,150 @@ export async function afterResponse(response: Response): Promise<Response> {
 - [ ] Error handling produces structured MCP errors
 - [ ] Tests achieve 80%+ coverage
 - [ ] MCP Inspector shows all tools correctly
+- [ ] Documentation search tool implemented and tested
+- [ ] Embeddings build pipeline operational
 
 ### Phase 4: Distribution
 - [ ] npm package installs globally
 - [ ] MCPB bundle installs in Claude Desktop
 - [ ] Documentation complete and accurate
 - [ ] Example scripts demonstrate key features
+- [ ] CI/CD workflow for weekly embeddings update
+
+---
+
+## Documentation Search Tool Integration
+
+### Overview
+
+The `search_resend_documentation` tool provides semantic search over Resend API documentation, achieving >95% token reduction compared to loading full documentation into context.
+
+**Full Implementation Details**: See [docs/documentation-search-implementation.md](docs/documentation-search-implementation.md)
+
+### Dependencies to Add
+
+Add to `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@xenova/transformers": "^2.17.0"
+  }
+}
+```
+
+**Nix Compatibility**: Pure JavaScript/WASM, no native bindings required.
+
+### npm Scripts to Add
+
+```json
+{
+  "scripts": {
+    "build:embeddings": "tsx scripts/build-embeddings.ts",
+    "test:search": "vitest run tests/unit/docs-search.test.ts tests/integration/search-docs-tool.test.ts"
+  }
+}
+```
+
+### File Structure
+
+```
+resend-mcp-server/
+|-- data/
+|   |-- embeddings.json          # Pre-computed embeddings (~2-5MB)
+|-- scripts/
+|   |-- build-embeddings.ts      # Build-time embedding generator
+|   |-- chunker.ts               # Documentation chunking logic
+|-- src/tools/docs/
+    |-- index.ts                 # Export docs tools
+    |-- search-docs-tool.ts      # Tool definition and execute
+    |-- vector-search.ts         # Search implementation
+```
+
+### Integration with Dynamic Tool Registry
+
+The tool belongs to **Core Tier** (Tier 1) - always loaded at startup:
+
+```typescript
+const CORE_TIER_TOOLS = [
+  "send_email",
+  "list_emails",
+  "get_email",
+  "list_domains",
+  "search_resend_documentation"  // Always available
+];
+```
+
+### Build Pipeline
+
+1. **Build-time** (CI/CD weekly):
+   - Fetch docs from `https://resend.com/docs/llms-full.txt`
+   - Chunk by markdown headers
+   - Generate embeddings with all-MiniLM-L6-v2
+   - Write to `data/embeddings.json`
+
+2. **Runtime**:
+   - Lazy-load embeddings on first search
+   - Embed query using same model
+   - Cosine similarity search
+   - Format results within token budget (<3000 tokens)
+
+### CI/CD Workflow
+
+Add `.github/workflows/update-embeddings.yml` for weekly embedding updates:
+
+```yaml
+name: Update Documentation Embeddings
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  update-embeddings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm run build:embeddings
+      - name: Commit if changed
+        run: |
+          git diff --quiet data/embeddings.json || (
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add data/embeddings.json
+            git commit -m "chore: update documentation embeddings"
+            git push
+          )
+```
+
+### Token Budget
+
+| Component | Tokens |
+|-----------|--------|
+| Tool definition | ~150 |
+| Search response (3 results) | ~2,400 |
+| **Total per search** | **~2,500** |
+
+**Savings**: 95-97.5% vs loading full docs (~50,000-100,000 tokens)
+
+### Testing Requirements
+
+1. **Unit tests**: Chunker, cosine similarity, token estimation
+2. **Integration tests**: Tool execute, error handling, token budget compliance
+3. **E2E tests**: MCP protocol compliance, Claude Desktop compatibility
+
+### Implementation Timeline
+
+| Week | Tasks |
+|------|-------|
+| Week 1 | Build infrastructure (chunker, embeddings generator) |
+| Week 2 | Search runtime (vector search, tool implementation) |
+| Week 3 | MCP integration (Core Tier, testing) |
+| Week 4 | Production polish (error handling, CI/CD, documentation) |
 
 ---
 
@@ -1055,6 +1193,6 @@ export async function afterResponse(response: Response): Promise<Response> {
 
 ---
 
-**Document Version**: 2.0.0
-**Last Updated**: 2026-01-16
+**Document Version**: 2.1.0
+**Last Updated**: 2026-01-21
 **Status**: Ready for implementation
