@@ -55,7 +55,9 @@ function createServer(): Server {
     },
     {
       capabilities: {
-        tools: {},
+        tools: {
+          listChanged: true,
+        },
       },
     }
   );

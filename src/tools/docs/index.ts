@@ -30,5 +30,6 @@ export {
   semanticSearch,
   keywordSearch,
   cosineSimilarity,
+  truncateToTokenBudget,
   getEmbeddingsStats,
 } from "./vector-search.js";
