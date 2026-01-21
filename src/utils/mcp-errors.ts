@@ -53,10 +53,12 @@ export interface MCPSuccessResponse<T> {
 
 /**
  * MCP tool response format.
+ * Uses index signature to allow additional properties for SDK compatibility.
  */
 export interface MCPToolResponse {
   content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
+  [key: string]: unknown;
 }
 
 /**
