@@ -19,6 +19,10 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import {
+  getSearchDocsDefinition,
+  executeSearchDocs,
+} from "./tools/docs/index.js";
 
 // AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[resend-mcp] ${message}`);
@@ -95,25 +99,7 @@ function createServer(): Server {
             required: [],
           },
         },
-        {
-          name: "search_resend_documentation",
-          description: "Search Resend API documentation for usage examples and API details",
-          inputSchema: {
-            type: "object" as const,
-            properties: {
-              query: {
-                type: "string",
-                description: "Search query or question about Resend API usage",
-              },
-              limit: {
-                type: "integer",
-                description: "Maximum results to return (default: 3)",
-                default: 3,
-              },
-            },
-            required: ["query"],
-          },
-        },
+        getSearchDocsDefinition(),
       ],
     };
   });
@@ -156,19 +142,7 @@ function createServer(): Server {
         };
 
       case "search_resend_documentation":
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                status: "placeholder",
-                message: "Phase 1 placeholder - Documentation search pending implementation",
-                tool: "search_resend_documentation",
-                query: args?.query,
-              }),
-            },
-          ],
-        };
+        return executeSearchDocs(args);
 
       default:
         return {

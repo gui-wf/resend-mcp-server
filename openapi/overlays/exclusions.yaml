@@ -16,36 +16,48 @@ info:
   version: 1.0.0
 
 actions:
+  # =============================================================================
   # API Key Operations - SECURITY RISK
-  # These endpoints could expose API keys or allow credential manipulation
-  - target: "$.paths['/api-keys']"
+  # =============================================================================
+  # These endpoints are disabled because:
+  # 1. API key listing could expose credential information
+  # 2. API key creation could enable privilege escalation attacks
+  # 3. API key deletion could disrupt production systems and cause service outages
+
+  # GET /api-keys - List API keys
+  - target: "$.paths['/api-keys'].get"
     update:
-      get:
-        x-speakeasy-mcp:
-          disabled: true
-          reason: "Security - API key listing could expose credentials"
-      post:
-        x-speakeasy-mcp:
-          disabled: true
-          reason: "Security - API key creation could enable privilege escalation"
+      x-speakeasy-mcp:
+        disabled: true
+        disabled-reason: "Security risk - API key listing could expose credentials to unauthorized users"
 
-  - target: "$.paths['/api-keys/{api_key_id}']"
+  # POST /api-keys - Create API key
+  - target: "$.paths['/api-keys'].post"
     update:
-      delete:
-        x-speakeasy-mcp:
-          disabled: true
-          reason: "Security - API key deletion could disrupt production systems"
+      x-speakeasy-mcp:
+        disabled: true
+        disabled-reason: "Security risk - API key creation could enable privilege escalation or unauthorized access"
 
-  # Webhook Secret Operations - SECURITY RISK
-  # Webhook secrets are sensitive and should not be exposed
-  # AIDEV-NOTE: Check if Resend has a dedicated webhook secret endpoint
-  # If so, add exclusion here
+  # DELETE /api-keys/{api_key_id} - Delete API key
+  - target: "$.paths['/api-keys/{api_key_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        disabled: true
+        disabled-reason: "Security risk - API key deletion could disrupt production systems and cause service outages"
 
-  # Future exclusions can be added here as needed
-  # Example format:
-  # - target: "$.paths['/internal/debug']"
+  # =============================================================================
+  # Future Exclusions
+  # =============================================================================
+  # Add additional exclusions here as needed. Use the following format:
+  #
+  # - target: "$.paths['/endpoint'].method"
   #   update:
-  #     get:
-  #       x-speakeasy-mcp:
-  #         disabled: true
-  #         reason: "Internal - Debug endpoint not for production use"
+  #     x-speakeasy-mcp:
+  #       disabled: true
+  #       disabled-reason: "Reason for exclusion"
+  #
+  # Valid reasons include:
+  # - "Security risk - [description]"
+  # - "Internal use only - [description]"
+  # - "Deprecated - [description]"
+  # - "Not suitable for AI automation - [description]"

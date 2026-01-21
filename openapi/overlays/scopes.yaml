@@ -9,8 +9,6 @@
 # - admin: DELETE operations and other destructive/sensitive actions
 #
 # Usage: Applied during merge:spec to produce openapi/merged.yaml
-#
-# AIDEV-TODO: Complete overlay implementation in Phase 2
 
 overlay: 1.0.0
 info:
@@ -18,7 +16,9 @@ info:
   version: 1.0.0
 
 actions:
+  # =============================================================================
   # Email Operations
+  # =============================================================================
   - target: "$.paths['/emails'].post"
     update:
       x-speakeasy-mcp:
@@ -43,19 +43,60 @@ actions:
         scopes:
           - write
 
-  - target: "$.paths['/emails/batch'].post"
-    update:
-      x-speakeasy-mcp:
-        scopes:
-          - write
-
   - target: "$.paths['/emails/{email_id}/cancel'].post"
     update:
       x-speakeasy-mcp:
         scopes:
           - write
 
+  - target: "$.paths['/emails/batch'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/emails/{email_id}/attachments'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/{email_id}/attachments/{attachment_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  # =============================================================================
+  # Receiving Emails Operations
+  # =============================================================================
+  - target: "$.paths['/emails/receiving'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/receiving/{email_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/receiving/{email_id}/attachments'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/emails/receiving/{email_id}/attachments/{attachment_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  # =============================================================================
   # Domain Operations
+  # =============================================================================
   - target: "$.paths['/domains'].get"
     update:
       x-speakeasy-mcp:
@@ -92,38 +133,30 @@ actions:
         scopes:
           - write
 
-  # Contact Operations
-  - target: "$.paths['/contacts'].get"
-    update:
-      x-speakeasy-mcp:
-        scopes:
-          - read
-
-  - target: "$.paths['/contacts'].post"
-    update:
-      x-speakeasy-mcp:
-        scopes:
-          - write
-
-  - target: "$.paths['/contacts/{contact_id}'].get"
-    update:
-      x-speakeasy-mcp:
-        scopes:
-          - read
-
-  - target: "$.paths['/contacts/{contact_id}'].patch"
-    update:
-      x-speakeasy-mcp:
-        scopes:
-          - write
-
-  - target: "$.paths['/contacts/{contact_id}'].delete"
+  # =============================================================================
+  # API Key Operations (will be excluded via exclusions.yaml)
+  # =============================================================================
+  - target: "$.paths['/api-keys'].get"
     update:
       x-speakeasy-mcp:
         scopes:
           - admin
 
+  - target: "$.paths['/api-keys'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  - target: "$.paths['/api-keys/{api_key_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
   # Template Operations
+  # =============================================================================
   - target: "$.paths['/templates'].get"
     update:
       x-speakeasy-mcp:
@@ -136,44 +169,153 @@ actions:
         scopes:
           - write
 
-  - target: "$.paths['/templates/{template_id}'].get"
+  - target: "$.paths['/templates/{id}'].get"
     update:
       x-speakeasy-mcp:
         scopes:
           - read
 
-  - target: "$.paths['/templates/{template_id}'].patch"
+  - target: "$.paths['/templates/{id}'].patch"
     update:
       x-speakeasy-mcp:
         scopes:
           - write
 
-  - target: "$.paths['/templates/{template_id}'].delete"
+  - target: "$.paths['/templates/{id}'].delete"
     update:
       x-speakeasy-mcp:
         scopes:
           - admin
 
-  # Webhook Operations
-  - target: "$.paths['/webhooks'].get"
+  - target: "$.paths['/templates/{id}/publish'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/templates/{id}/duplicate'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  # =============================================================================
+  # Audience Operations
+  # =============================================================================
+  - target: "$.paths['/audiences'].get"
     update:
       x-speakeasy-mcp:
         scopes:
           - read
 
-  - target: "$.paths['/webhooks'].post"
+  - target: "$.paths['/audiences'].post"
     update:
       x-speakeasy-mcp:
         scopes:
           - write
 
-  - target: "$.paths['/webhooks/{webhook_id}'].delete"
+  - target: "$.paths['/audiences/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{id}'].delete"
     update:
       x-speakeasy-mcp:
         scopes:
           - admin
 
+  # =============================================================================
+  # Contact Operations
+  # =============================================================================
+  - target: "$.paths['/audiences/{audience_id}/contacts'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{audience_id}/contacts'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{email}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{email}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{email}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
+  # Contact Segments Operations
+  # =============================================================================
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}/segments'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}/segments'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}/segments/{segment_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
+  # Contact Topics Operations
+  # =============================================================================
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}/topics'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/audiences/{audience_id}/contacts/{id}/topics'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  # =============================================================================
   # Broadcast Operations
+  # =============================================================================
   - target: "$.paths['/broadcasts'].get"
     update:
       x-speakeasy-mcp:
@@ -186,14 +328,152 @@ actions:
         scopes:
           - write
 
-  - target: "$.paths['/broadcasts/{broadcast_id}'].delete"
+  - target: "$.paths['/broadcasts/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/broadcasts/{id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/broadcasts/{id}'].delete"
     update:
       x-speakeasy-mcp:
         scopes:
           - admin
 
-  - target: "$.paths['/broadcasts/{broadcast_id}/send'].post"
+  - target: "$.paths['/broadcasts/{id}/send'].post"
     update:
       x-speakeasy-mcp:
         scopes:
           - write
+
+  # =============================================================================
+  # Webhook Operations
+  # =============================================================================
+  - target: "$.paths['/webhooks'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/webhooks'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/webhooks/{webhook_id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/webhooks/{webhook_id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/webhooks/{webhook_id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
+  # Segment Operations
+  # =============================================================================
+  - target: "$.paths['/segments'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/segments'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/segments/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/segments/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
+  # Topic Operations
+  # =============================================================================
+  - target: "$.paths['/topics'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/topics'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/topics/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/topics/{id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/topics/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
+
+  # =============================================================================
+  # Contact Property Operations
+  # =============================================================================
+  - target: "$.paths['/contact-properties'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/contact-properties'].post"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/contact-properties/{id}'].get"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - read
+
+  - target: "$.paths['/contact-properties/{id}'].patch"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - write
+
+  - target: "$.paths['/contact-properties/{id}'].delete"
+    update:
+      x-speakeasy-mcp:
+        scopes:
+          - admin
