@@ -178,22 +178,52 @@ export const SECONDARY_TOOLS = [
 
 /**
  * Tertiary tools - advanced/admin features.
+ * NOTE: API key operations are EXCLUDED for security reasons.
  */
 export const TERTIARY_TOOLS = [
+  // Destructive Operations
   "delete_domain",
-  "update_domain",
-  "list_contacts",
-  "create_contact",
-  "get_contact",
-  "update_contact",
   "delete_contact",
-  "list_audiences",
-  "create_audience",
-  "get_audience",
-  "delete_audience",
-  "list_api_keys",
-  "create_api_key",
-  "delete_api_key",
+  "delete_template",
+  "delete_topic",
+  "delete_webhook",
+  "delete_segment",
+  "delete_broadcast",
+  "delete_contact_property",
+  // Batch Operations
+  "send_batch_emails",
+  // Broadcast Operations
+  "list_broadcasts",
+  "create_broadcast",
+  "get_broadcast",
+  "update_broadcast",
+  "send_broadcast",
+  // Segment Operations
+  "list_segments",
+  "create_segment",
+  "get_segment",
+  "add_contact_to_segment",
+  "remove_contact_from_segment",
+  // Contact Property Operations
+  "list_contact_properties",
+  "create_contact_property",
+  "get_contact_property",
+  "update_contact_property",
+  // Inbound Email Operations
+  "list_received_emails",
+  "get_received_email",
+  "list_received_email_attachments",
+  "get_received_email_attachment",
+  // Sent Email Attachment Operations
+  "list_email_attachments",
+  "get_email_attachment",
+  // Topic Advanced Operations
+  "get_topic",
+  "update_topic",
+  "get_contact_topics",
+  "update_contact_topics",
+  // Contact Segment Operations
+  "list_contact_segments",
 ];
 
 // ============================================================================

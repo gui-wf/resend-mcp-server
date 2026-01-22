@@ -196,6 +196,232 @@ const getAudienceSchema = z.object({
 });
 
 // ============================================================================
+// Zod Schemas - Tertiary Tools (Destructive)
+// ============================================================================
+
+const deleteDomainSchema = z.object({
+  id: z.string().min(1, "Domain ID is required"),
+});
+
+const deleteContactSchema = z.object({
+  audienceId: z.string().min(1, "Audience ID is required"),
+  id: z.string().optional(),
+  email: z.string().email().optional(),
+}).refine((data) => data.id || data.email, {
+  message: "Either 'id' or 'email' is required",
+});
+
+const deleteTemplateSchema = z.object({
+  id: z.string().min(1, "Template ID is required"),
+});
+
+const deleteTopicSchema = z.object({
+  id: z.string().min(1, "Topic ID is required"),
+});
+
+const deleteWebhookSchema = z.object({
+  id: z.string().min(1, "Webhook ID is required"),
+});
+
+const deleteSegmentSchema = z.object({
+  id: z.string().min(1, "Segment ID is required"),
+});
+
+const deleteBroadcastSchema = z.object({
+  id: z.string().min(1, "Broadcast ID is required"),
+});
+
+const deleteContactPropertySchema = z.object({
+  id: z.string().min(1, "Contact property ID is required"),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Batch)
+// ============================================================================
+
+const sendBatchEmailsSchema = z.object({
+  emails: z.array(z.object({
+    from: z.string().min(1, "From address is required"),
+    to: z.union([z.string().email(), z.array(z.string().email())]),
+    subject: z.string().min(1).max(998),
+    html: z.string().optional(),
+    text: z.string().optional(),
+    cc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+    bcc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+    reply_to: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+    headers: z.record(z.string()).optional(),
+    tags: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+    scheduled_at: z.string().optional(),
+  })).min(1).max(100, "Maximum 100 emails per batch"),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Broadcast)
+// ============================================================================
+
+const listBroadcastsSchema = z.object({});
+
+const createBroadcastSchema = z.object({
+  name: z.string().optional(),
+  segmentId: z.string().min(1, "Segment ID is required"),
+  from: z.string().min(1, "From address is required"),
+  subject: z.string().min(1, "Subject is required"),
+  html: z.string().optional(),
+  text: z.string().optional(),
+  replyTo: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+  previewText: z.string().optional(),
+}).refine((data) => data.html || data.text, {
+  message: "Either 'html' or 'text' content is required",
+});
+
+const getBroadcastSchema = z.object({
+  id: z.string().min(1, "Broadcast ID is required"),
+});
+
+const updateBroadcastSchema = z.object({
+  id: z.string().min(1, "Broadcast ID is required"),
+  name: z.string().optional(),
+  from: z.string().optional(),
+  subject: z.string().optional(),
+  html: z.string().optional(),
+  text: z.string().optional(),
+  replyTo: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+  previewText: z.string().optional(),
+});
+
+const sendBroadcastSchema = z.object({
+  id: z.string().min(1, "Broadcast ID is required"),
+  scheduledAt: z.string().optional(),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Segment)
+// ============================================================================
+
+const listSegmentsSchema = z.object({});
+
+const createSegmentSchema = z.object({
+  name: z.string().min(1, "Segment name is required"),
+});
+
+const getSegmentSchema = z.object({
+  id: z.string().min(1, "Segment ID is required"),
+});
+
+const addContactToSegmentSchema = z.object({
+  segmentId: z.string().min(1, "Segment ID is required"),
+  contactId: z.string().optional(),
+  email: z.string().email().optional(),
+}).refine((data) => data.contactId || data.email, {
+  message: "Either 'contactId' or 'email' is required",
+});
+
+const removeContactFromSegmentSchema = z.object({
+  segmentId: z.string().min(1, "Segment ID is required"),
+  contactId: z.string().optional(),
+  email: z.string().email().optional(),
+}).refine((data) => data.contactId || data.email, {
+  message: "Either 'contactId' or 'email' is required",
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Contact Property)
+// ============================================================================
+
+const listContactPropertiesSchema = z.object({});
+
+const createContactPropertySchema = z.object({
+  key: z.string().min(1, "Property key is required"),
+  type: z.enum(["string", "number"]),
+  fallbackValue: z.union([z.string(), z.number()]).nullable().optional(),
+});
+
+const getContactPropertySchema = z.object({
+  id: z.string().min(1, "Contact property ID is required"),
+});
+
+const updateContactPropertySchema = z.object({
+  id: z.string().min(1, "Contact property ID is required"),
+  fallbackValue: z.union([z.string(), z.number()]).nullable().optional(),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Inbound Email)
+// ============================================================================
+
+const listReceivedEmailsSchema = z.object({});
+
+const getReceivedEmailSchema = z.object({
+  id: z.string().min(1, "Email ID is required"),
+});
+
+const listReceivedEmailAttachmentsSchema = z.object({
+  emailId: z.string().min(1, "Email ID is required"),
+});
+
+const getReceivedEmailAttachmentSchema = z.object({
+  emailId: z.string().min(1, "Email ID is required"),
+  id: z.string().min(1, "Attachment ID is required"),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Sent Email Attachments)
+// ============================================================================
+
+const listEmailAttachmentsSchema = z.object({
+  emailId: z.string().min(1, "Email ID is required"),
+});
+
+const getEmailAttachmentSchema = z.object({
+  emailId: z.string().min(1, "Email ID is required"),
+  id: z.string().min(1, "Attachment ID is required"),
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Topic Advanced)
+// ============================================================================
+
+const getTopicSchema = z.object({
+  id: z.string().min(1, "Topic ID is required"),
+});
+
+const updateTopicSchema = z.object({
+  id: z.string().min(1, "Topic ID is required"),
+  name: z.string().optional(),
+  description: z.string().optional(),
+});
+
+const getContactTopicsSchema = z.object({
+  id: z.string().optional(),
+  email: z.string().email().optional(),
+}).refine((data) => data.id || data.email, {
+  message: "Either 'id' or 'email' is required",
+});
+
+const updateContactTopicsSchema = z.object({
+  id: z.string().optional(),
+  email: z.string().email().optional(),
+  topics: z.array(z.object({
+    id: z.string(),
+    subscription: z.enum(["opt_in", "opt_out"]),
+  })),
+}).refine((data) => data.id || data.email, {
+  message: "Either 'id' or 'email' is required",
+});
+
+// ============================================================================
+// Zod Schemas - Tertiary Tools (Contact Segments)
+// ============================================================================
+
+const listContactSegmentsSchema = z.object({
+  contactId: z.string().min(1),
+  email: z.never().optional(),
+}).or(z.object({
+  contactId: z.never().optional(),
+  email: z.string().email(),
+}));
+
+// ============================================================================
 // Helper: Validation Error Handler
 // ============================================================================
 
@@ -1719,6 +1945,1705 @@ function createGetAudienceTool(resend: Resend): ToolDefinition {
 }
 
 // ============================================================================
+// Tool Factories - Tertiary Tools (Destructive)
+// ============================================================================
+
+function createDeleteDomainTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_domain",
+    description: "Delete a domain from your account. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The domain ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Domain",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteDomainSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.domains.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Domain deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteContactTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_contact",
+    description: "Delete a contact from an audience. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        audienceId: {
+          type: "string",
+          description: "The audience ID containing the contact",
+        },
+        id: {
+          type: "string",
+          description: "The contact ID to delete (use either id or email)",
+        },
+        email: {
+          type: "string",
+          description: "The contact email to delete (use either id or email)",
+        },
+      },
+      required: ["audienceId"],
+    },
+    annotations: {
+      title: "Delete Contact",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteContactSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { audienceId, id, email } = parseResult.data;
+        // SDK requires either id or email, not both
+        const payload = id
+          ? { audienceId, id } as const
+          : { audienceId, email: email! } as const;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.remove(payload)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteTemplateTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_template",
+    description: "Delete an email template. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The template ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Template",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteTemplateSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.templates.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Template deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteTopicTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_topic",
+    description: "Delete a topic. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The topic ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Topic",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteTopicSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.topics.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Topic deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteWebhookTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_webhook",
+    description: "Delete a webhook. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The webhook ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Webhook",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteWebhookSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.webhooks.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Webhook deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteSegmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_segment",
+    description: "Delete a segment. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The segment ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Segment",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteSegmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.segments.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Segment deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteBroadcastTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_broadcast",
+    description: "Delete a broadcast. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The broadcast ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Broadcast",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteBroadcastSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Broadcast deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createDeleteContactPropertyTool(resend: Resend): ToolDefinition {
+  return {
+    name: "delete_contact_property",
+    description: "Delete a contact property. This is a destructive operation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The contact property ID to delete",
+        },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Delete Contact Property",
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["admin"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = deleteContactPropertySchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contactProperties.remove(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact property deleted successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Batch)
+// ============================================================================
+
+function createSendBatchEmailsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "send_batch_emails",
+    description: "Send up to 100 emails in a single batch request.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emails: {
+          type: "array",
+          description: "Array of email objects (max 100)",
+          items: {
+            type: "object",
+            properties: {
+              from: { type: "string", description: "Sender email address" },
+              to: { type: ["string", "array"], description: "Recipient(s)" },
+              subject: { type: "string", description: "Email subject" },
+              html: { type: "string", description: "HTML content" },
+              text: { type: "string", description: "Plain text content" },
+              cc: { type: ["string", "array"], description: "CC recipient(s)" },
+              bcc: { type: ["string", "array"], description: "BCC recipient(s)" },
+              reply_to: { type: ["string", "array"], description: "Reply-to address(es)" },
+              headers: { type: "object", description: "Custom headers" },
+              tags: { type: "array", description: "Email tags" },
+              scheduled_at: { type: "string", description: "Scheduled send time (ISO 8601)" },
+            },
+            required: ["from", "to", "subject"],
+          },
+        },
+      },
+      required: ["emails"],
+    },
+    annotations: {
+      title: "Send Batch Emails",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = sendBatchEmailsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { emails } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.batch.send(emails as Parameters<typeof resend.batch.send>[0])
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: `Batch sent: ${emails.length} emails`,
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Broadcast)
+// ============================================================================
+
+function createListBroadcastsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_broadcasts",
+    description: "List all broadcasts in the account.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    annotations: {
+      title: "List Broadcasts",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listBroadcastsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.list()
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createCreateBroadcastTool(resend: Resend): ToolDefinition {
+  return {
+    name: "create_broadcast",
+    description: "Create a new broadcast for a segment.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Broadcast name" },
+        segmentId: { type: "string", description: "Target segment ID" },
+        from: { type: "string", description: "Sender email address" },
+        subject: { type: "string", description: "Email subject" },
+        html: { type: "string", description: "HTML content" },
+        text: { type: "string", description: "Plain text content" },
+        replyTo: { type: ["string", "array"], description: "Reply-to address(es)" },
+        previewText: { type: "string", description: "Preview text" },
+      },
+      required: ["segmentId", "from", "subject"],
+    },
+    annotations: {
+      title: "Create Broadcast",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = createBroadcastSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const input = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.create(input as Parameters<typeof resend.broadcasts.create>[0])
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Broadcast created successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetBroadcastTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_broadcast",
+    description: "Get details of a specific broadcast.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The broadcast ID" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Get Broadcast",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getBroadcastSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.get(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createUpdateBroadcastTool(resend: Resend): ToolDefinition {
+  return {
+    name: "update_broadcast",
+    description: "Update an existing broadcast.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The broadcast ID" },
+        name: { type: "string", description: "Broadcast name" },
+        from: { type: "string", description: "Sender email address" },
+        subject: { type: "string", description: "Email subject" },
+        html: { type: "string", description: "HTML content" },
+        text: { type: "string", description: "Plain text content" },
+        replyTo: { type: ["string", "array"], description: "Reply-to address(es)" },
+        previewText: { type: "string", description: "Preview text" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Update Broadcast",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = updateBroadcastSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, ...updateData } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.update(id, updateData as Parameters<typeof resend.broadcasts.update>[1])
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Broadcast updated successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createSendBroadcastTool(resend: Resend): ToolDefinition {
+  return {
+    name: "send_broadcast",
+    description: "Send a broadcast immediately or schedule it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The broadcast ID to send" },
+        scheduledAt: { type: "string", description: "Schedule time (ISO 8601)" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Send Broadcast",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = sendBroadcastSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, scheduledAt } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.broadcasts.send(id, scheduledAt ? { scheduledAt } : undefined)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Broadcast sent successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Segment)
+// ============================================================================
+
+function createListSegmentsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_segments",
+    description: "List all segments in the account.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    annotations: {
+      title: "List Segments",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listSegmentsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const result = await withRateLimitAndRetry(() =>
+          resend.segments.list()
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createCreateSegmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "create_segment",
+    description: "Create a new segment.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Segment name" },
+      },
+      required: ["name"],
+    },
+    annotations: {
+      title: "Create Segment",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = createSegmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const input = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.segments.create(input)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Segment created successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetSegmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_segment",
+    description: "Get details of a specific segment.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The segment ID" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Get Segment",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getSegmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.segments.get(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createAddContactToSegmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "add_contact_to_segment",
+    description: "Add a contact to a segment.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        segmentId: { type: "string", description: "The segment ID" },
+        contactId: { type: "string", description: "The contact ID (use contactId or email)" },
+        email: { type: "string", description: "The contact email (use contactId or email)" },
+      },
+      required: ["segmentId"],
+    },
+    annotations: {
+      title: "Add Contact to Segment",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = addContactToSegmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { segmentId, contactId, email } = parseResult.data;
+        // SDK requires either contactId or email, not both
+        const payload = contactId
+          ? { segmentId, contactId } as const
+          : { segmentId, email: email! } as const;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.segments.add(payload)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact added to segment successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createRemoveContactFromSegmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "remove_contact_from_segment",
+    description: "Remove a contact from a segment.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        segmentId: { type: "string", description: "The segment ID" },
+        contactId: { type: "string", description: "The contact ID (use contactId or email)" },
+        email: { type: "string", description: "The contact email (use contactId or email)" },
+      },
+      required: ["segmentId"],
+    },
+    annotations: {
+      title: "Remove Contact from Segment",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = removeContactFromSegmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { segmentId, contactId, email } = parseResult.data;
+        // SDK requires either contactId or email, not both
+        const payload = contactId
+          ? { segmentId, contactId } as const
+          : { segmentId, email: email! } as const;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.segments.remove(payload)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact removed from segment successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Contact Property)
+// ============================================================================
+
+function createListContactPropertiesTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_contact_properties",
+    description: "List all contact properties.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    annotations: {
+      title: "List Contact Properties",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listContactPropertiesSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const result = await withRateLimitAndRetry(() =>
+          resend.contactProperties.list()
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createCreateContactPropertyTool(resend: Resend): ToolDefinition {
+  return {
+    name: "create_contact_property",
+    description: "Create a new contact property.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        key: { type: "string", description: "Property key" },
+        type: { type: "string", enum: ["string", "number"], description: "Property type" },
+        fallbackValue: { type: ["string", "number", "null"], description: "Default value" },
+      },
+      required: ["key", "type"],
+    },
+    annotations: {
+      title: "Create Contact Property",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = createContactPropertySchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const input = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contactProperties.create(input as Parameters<typeof resend.contactProperties.create>[0])
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact property created successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetContactPropertyTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_contact_property",
+    description: "Get details of a specific contact property.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The contact property ID" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Get Contact Property",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getContactPropertySchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contactProperties.get(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createUpdateContactPropertyTool(resend: Resend): ToolDefinition {
+  return {
+    name: "update_contact_property",
+    description: "Update a contact property.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The contact property ID" },
+        fallbackValue: { type: ["string", "number", "null"], description: "New default value" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Update Contact Property",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = updateContactPropertySchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, ...updateData } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contactProperties.update({ id, ...updateData } as Parameters<typeof resend.contactProperties.update>[0])
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact property updated successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Inbound Email)
+// ============================================================================
+
+function createListReceivedEmailsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_received_emails",
+    description: "List all received (inbound) emails.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    annotations: {
+      title: "List Received Emails",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listReceivedEmailsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.receiving.list()
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetReceivedEmailTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_received_email",
+    description: "Get details of a specific received email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The received email ID" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Get Received Email",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getReceivedEmailSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.receiving.get(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createListReceivedEmailAttachmentsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_received_email_attachments",
+    description: "List attachments of a received email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emailId: { type: "string", description: "The received email ID" },
+      },
+      required: ["emailId"],
+    },
+    annotations: {
+      title: "List Received Email Attachments",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listReceivedEmailAttachmentsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { emailId } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.receiving.attachments.list({ emailId })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetReceivedEmailAttachmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_received_email_attachment",
+    description: "Get a specific attachment from a received email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emailId: { type: "string", description: "The received email ID" },
+        id: { type: "string", description: "The attachment ID" },
+      },
+      required: ["emailId", "id"],
+    },
+    annotations: {
+      title: "Get Received Email Attachment",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getReceivedEmailAttachmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { emailId, id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.receiving.attachments.get({ emailId, id })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Sent Email Attachments)
+// ============================================================================
+
+function createListEmailAttachmentsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_email_attachments",
+    description: "List attachments of a sent email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emailId: { type: "string", description: "The sent email ID" },
+      },
+      required: ["emailId"],
+    },
+    annotations: {
+      title: "List Email Attachments",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listEmailAttachmentsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { emailId } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.attachments.list({ emailId })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetEmailAttachmentTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_email_attachment",
+    description: "Get a specific attachment from a sent email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        emailId: { type: "string", description: "The sent email ID" },
+        id: { type: "string", description: "The attachment ID" },
+      },
+      required: ["emailId", "id"],
+    },
+    annotations: {
+      title: "Get Email Attachment",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getEmailAttachmentSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { emailId, id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.emails.attachments.get({ emailId, id })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Topic Advanced)
+// ============================================================================
+
+function createGetTopicTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_topic",
+    description: "Get details of a specific topic.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The topic ID" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Get Topic",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getTopicSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.topics.get(id)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createUpdateTopicTool(resend: Resend): ToolDefinition {
+  return {
+    name: "update_topic",
+    description: "Update a topic.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The topic ID" },
+        name: { type: "string", description: "New topic name" },
+        description: { type: "string", description: "New topic description" },
+      },
+      required: ["id"],
+    },
+    annotations: {
+      title: "Update Topic",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = updateTopicSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, ...updateData } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.topics.update({ id, ...updateData })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Topic updated successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createGetContactTopicsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "get_contact_topics",
+    description: "Get topic subscriptions for a contact.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The contact ID (use id or email)" },
+        email: { type: "string", description: "The contact email (use id or email)" },
+      },
+    },
+    annotations: {
+      title: "Get Contact Topics",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = getContactTopicsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, email } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.topics.list({ id, email })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+function createUpdateContactTopicsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "update_contact_topics",
+    description: "Update topic subscriptions for a contact.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The contact ID (use id or email)" },
+        email: { type: "string", description: "The contact email (use id or email)" },
+        topics: {
+          type: "array",
+          description: "Topic subscriptions to update",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Topic ID" },
+              subscription: { type: "string", enum: ["opt_in", "opt_out"], description: "Subscription status" },
+            },
+            required: ["id", "subscription"],
+          },
+        },
+      },
+      required: ["topics"],
+    },
+    annotations: {
+      title: "Update Contact Topics",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["write"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = updateContactTopicsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const { id, email, topics } = parseResult.data;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.topics.update({ id, email, topics })
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse({
+          success: true,
+          message: "Contact topics updated successfully",
+          ...result.data,
+        });
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Tool Factories - Tertiary Tools (Contact Segments)
+// ============================================================================
+
+function createListContactSegmentsTool(resend: Resend): ToolDefinition {
+  return {
+    name: "list_contact_segments",
+    description: "List segments that a contact belongs to.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        contactId: { type: "string", description: "The contact ID (use contactId or email)" },
+        email: { type: "string", description: "The contact email (use contactId or email)" },
+      },
+    },
+    annotations: {
+      title: "List Contact Segments",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    tier: "tertiary",
+    scopes: ["read"],
+    execute: async (args: unknown): Promise<ToolResponse> => {
+      const parseResult = listContactSegmentsSchema.safeParse(args);
+      if (!parseResult.success) {
+        return handleValidationError(parseResult);
+      }
+
+      try {
+        const data = parseResult.data;
+        // SDK expects contactId or email, not both
+        const payload = "contactId" in data && data.contactId
+          ? { contactId: data.contactId } as const
+          : { email: data.email! } as const;
+        const result = await withRateLimitAndRetry(() =>
+          resend.contacts.segments.list(payload)
+        );
+
+        if (result.error) {
+          return createToolResponse(formatResendError(result.error));
+        }
+
+        return createToolResponse(result.data);
+      } catch (error) {
+        return createToolResponse(formatResendError(error));
+      }
+    },
+  };
+}
+
+// ============================================================================
 // Public API
 // ============================================================================
 
@@ -1766,6 +3691,49 @@ export function createToolDefinitions(resend: Resend): ToolDefinition[] {
     createListAudiencesTool(resend),
     createCreateAudienceTool(resend),
     createGetAudienceTool(resend),
+    // Tertiary - Destructive
+    createDeleteDomainTool(resend),
+    createDeleteContactTool(resend),
+    createDeleteTemplateTool(resend),
+    createDeleteTopicTool(resend),
+    createDeleteWebhookTool(resend),
+    createDeleteSegmentTool(resend),
+    createDeleteBroadcastTool(resend),
+    createDeleteContactPropertyTool(resend),
+    // Tertiary - Batch
+    createSendBatchEmailsTool(resend),
+    // Tertiary - Broadcast
+    createListBroadcastsTool(resend),
+    createCreateBroadcastTool(resend),
+    createGetBroadcastTool(resend),
+    createUpdateBroadcastTool(resend),
+    createSendBroadcastTool(resend),
+    // Tertiary - Segment
+    createListSegmentsTool(resend),
+    createCreateSegmentTool(resend),
+    createGetSegmentTool(resend),
+    createAddContactToSegmentTool(resend),
+    createRemoveContactFromSegmentTool(resend),
+    // Tertiary - Contact Property
+    createListContactPropertiesTool(resend),
+    createCreateContactPropertyTool(resend),
+    createGetContactPropertyTool(resend),
+    createUpdateContactPropertyTool(resend),
+    // Tertiary - Inbound Email
+    createListReceivedEmailsTool(resend),
+    createGetReceivedEmailTool(resend),
+    createListReceivedEmailAttachmentsTool(resend),
+    createGetReceivedEmailAttachmentTool(resend),
+    // Tertiary - Sent Email Attachments
+    createListEmailAttachmentsTool(resend),
+    createGetEmailAttachmentTool(resend),
+    // Tertiary - Topic Advanced
+    createGetTopicTool(resend),
+    createUpdateTopicTool(resend),
+    createGetContactTopicsTool(resend),
+    createUpdateContactTopicsTool(resend),
+    // Tertiary - Contact Segments
+    createListContactSegmentsTool(resend),
   ];
 }
 
@@ -1807,6 +3775,50 @@ export function getToolNamesByTier(): Record<string, string[]> {
       "create_audience",
       "get_audience",
     ],
-    tertiary: [],
+    tertiary: [
+      // Destructive
+      "delete_domain",
+      "delete_contact",
+      "delete_template",
+      "delete_topic",
+      "delete_webhook",
+      "delete_segment",
+      "delete_broadcast",
+      "delete_contact_property",
+      // Batch
+      "send_batch_emails",
+      // Broadcast
+      "list_broadcasts",
+      "create_broadcast",
+      "get_broadcast",
+      "update_broadcast",
+      "send_broadcast",
+      // Segment
+      "list_segments",
+      "create_segment",
+      "get_segment",
+      "add_contact_to_segment",
+      "remove_contact_from_segment",
+      // Contact Property
+      "list_contact_properties",
+      "create_contact_property",
+      "get_contact_property",
+      "update_contact_property",
+      // Inbound Email
+      "list_received_emails",
+      "get_received_email",
+      "list_received_email_attachments",
+      "get_received_email_attachment",
+      // Sent Email Attachments
+      "list_email_attachments",
+      "get_email_attachment",
+      // Topic Advanced
+      "get_topic",
+      "update_topic",
+      "get_contact_topics",
+      "update_contact_topics",
+      // Contact Segments
+      "list_contact_segments",
+    ],
   };
 }
