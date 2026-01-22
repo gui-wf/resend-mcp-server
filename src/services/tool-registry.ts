@@ -8,9 +8,10 @@
  */
 
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ToolScope, ToolTier } from "../config/environment.js";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[tool-registry] ${message}`);
 
 /**
@@ -50,14 +51,9 @@ export interface MCPToolDefinition {
 
 /**
  * Tool response format from execute function.
- * Includes index signature for MCP SDK compatibility.
+ * Re-exports SDK's CallToolResult for proper type compatibility.
  */
-export interface ToolResponse {
-  content: Array<{ type: "text"; text: string }>;
-  isError?: boolean;
-  // AIDEV-NOTE: Index signature required for MCP SDK type compatibility
-  [key: string]: unknown;
-}
+export type ToolResponse = CallToolResult;
 
 /**
  * Internal tool definition with metadata.
@@ -131,7 +127,7 @@ const toolsByTier: Record<Exclude<ToolTier, "all">, string[]> = {
   tertiary: [],
 };
 
-// AIDEV-NOTE: Tool tier arrays define which tools belong to each tier
+// NOTE: Tool tier arrays define which tools belong to each tier
 // These are populated by registerTool() calls during initialization
 
 /**
@@ -569,7 +565,7 @@ async function notifyToolsChanged(): Promise<void> {
   }
 
   try {
-    // AIDEV-NOTE: MCP SDK may require specific notification format
+    // NOTE: MCP SDK may require specific notification format
     // The notification name follows MCP spec: "notifications/tools/list_changed"
     await serverInstance.notification({
       method: "notifications/tools/list_changed",

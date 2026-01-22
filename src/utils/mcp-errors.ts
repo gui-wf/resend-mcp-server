@@ -7,7 +7,7 @@
  * @module utils/mcp-errors
  */
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[mcp-errors] ${message}`);
 
 /**

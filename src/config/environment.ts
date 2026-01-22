@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[config] ${message}`);
 
 /**

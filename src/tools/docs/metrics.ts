@@ -3,7 +3,7 @@
  * Collects search performance metrics and outputs them as JSON lines to stderr.
  */
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 
 /**
  * Metric types for documentation search.

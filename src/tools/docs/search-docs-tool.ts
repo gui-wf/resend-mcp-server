@@ -10,7 +10,7 @@ import { isEmbeddingsLoaded, getFreshnessWarning } from "./embeddings-loader.js"
 import { toDocsError, formatErrorResponse } from "./errors.js";
 import { recordSearch, recordSearchError, setEmbeddingsCacheStatus } from "./metrics.js";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[docs-search] ${message}`);
 
 /** Minimum relevance threshold for semantic search results */

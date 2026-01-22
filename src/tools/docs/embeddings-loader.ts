@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { createDocsError, DocsErrorCode } from "./errors.js";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[docs-search] ${message}`);
 
 /** Expected schema version - must match build-embeddings.ts INDEX_VERSION */

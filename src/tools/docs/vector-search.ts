@@ -7,7 +7,7 @@ import type { ScoredChunk } from "./types.js";
 import { loadEmbeddings } from "./embeddings-loader.js";
 import { createDocsError, DocsErrorCode } from "./errors.js";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[docs-search] ${message}`);
 
 /** Timeout for model loading in milliseconds (2 minutes) */

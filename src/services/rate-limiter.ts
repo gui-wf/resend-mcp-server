@@ -7,7 +7,7 @@
  * @module services/rate-limiter
  */
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[rate-limiter] ${message}`);
 
 /**
@@ -153,7 +153,7 @@ export function withRateLimit<T>(fn: () => Promise<T>): Promise<T> {
     queue.push({ fn, resolve, reject });
 
     // Start processing if not already running
-    // AIDEV-NOTE: Using void to explicitly ignore the promise (fire and forget)
+    // NOTE: Using void to explicitly ignore the promise (fire and forget)
     void processQueue();
   });
 }

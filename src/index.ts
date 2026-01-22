@@ -30,7 +30,7 @@ import {
 import { createToolDefinitions } from "./tools/index.js";
 import { createToolResponse, createValidationError } from "./utils/mcp-errors.js";
 
-// AIDEV-NOTE: Use console.error for logging - stdout is reserved for MCP protocol
+// NOTE: Use console.error for logging - stdout is reserved for MCP protocol
 const log = (message: string) => console.error(`[resend-mcp] ${message}`);
 
 // ============================================================================

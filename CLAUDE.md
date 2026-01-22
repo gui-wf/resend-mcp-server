@@ -85,12 +85,12 @@ return {
 };
 ```
 
-## AIDEV Anchors
+## Code Anchors
 
 Use for temporary code notes (max 120 chars):
-- `AIDEV-NOTE:` - Document quirks or constraints
-- `AIDEV-TODO:` - Action items
-- `AIDEV-QUESTION:` - Decisions needed
+- `NOTE:` - Document quirks or constraints
+- `TODO:` - Action items
+- `QUESTION:` - Decisions needed
 
 ## Pending Third-Party Features
 
