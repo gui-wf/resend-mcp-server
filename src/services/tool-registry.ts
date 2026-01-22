@@ -50,10 +50,13 @@ export interface MCPToolDefinition {
 
 /**
  * Tool response format from execute function.
+ * Includes index signature for MCP SDK compatibility.
  */
 export interface ToolResponse {
   content: Array<{ type: "text"; text: string }>;
   isError?: boolean;
+  // AIDEV-NOTE: Index signature required for MCP SDK type compatibility
+  [key: string]: unknown;
 }
 
 /**
@@ -136,8 +139,9 @@ const toolsByTier: Record<Exclude<ToolTier, "all">, string[]> = {
  */
 export const CORE_TOOLS = [
   "send_email",
-  "list_domains",
   "get_email",
+  "list_emails",
+  "list_domains",
   "search_resend_documentation",
 ];
 
@@ -145,11 +149,28 @@ export const CORE_TOOLS = [
  * Secondary tools - commonly used features.
  */
 export const SECONDARY_TOOLS = [
-  "batch_send_email",
+  "get_domain",
   "create_domain",
   "verify_domain",
-  "list_emails",
-  "get_domain",
+  "update_domain",
+  "batch_send_email",
+  "update_email",
+  "cancel_email",
+  "list_contacts",
+  "create_contact",
+  "get_contact",
+  "update_contact",
+  "list_templates",
+  "create_template",
+  "get_template",
+  "update_template",
+  "publish_template",
+  "duplicate_template",
+  "list_topics",
+  "create_topic",
+  "list_webhooks",
+  "create_webhook",
+  "update_webhook",
 ];
 
 /**

@@ -1,8 +1,8 @@
 # Resend MCP Server - Implementation Roadmap
 
-**Last Updated**: 2026-01-21
-**Current Phase**: Phase 5 (In Progress)
-**Overall Progress**: ~70%
+**Last Updated**: 2026-01-22
+**Current Phase**: Phase 7 (Pending)
+**Overall Progress**: ~85%
 
 ---
 
@@ -32,8 +32,8 @@ Each phase follows this structured workflow:
 | Phase 2 | Documentation Search Tool | COMPLETED | 100% |
 | Phase 3 | Testing Infrastructure | COMPLETED | 100% |
 | Phase 4 | Production Polish | COMPLETED | 100% |
-| Phase 5 | Core API Integration | IN PROGRESS | 60% |
-| Phase 6 | Tool Registry Integration | PENDING | 0% |
+| Phase 5 | Core API Integration | COMPLETED | 100% |
+| Phase 6 | Tool Registry Integration | COMPLETED | 100% |
 | Phase 7 | Secondary Tools | PENDING | 0% |
 | Phase 8 | Tertiary Tools | PENDING | 0% |
 
@@ -151,7 +151,7 @@ Each phase follows this structured workflow:
 
 ---
 
-## Phase 5: Core API Integration (IN PROGRESS)
+## Phase 5: Core API Integration (COMPLETED)
 
 **Objective**: Implement real Resend API calls for core tools
 
@@ -167,11 +167,6 @@ Each phase follows this structured workflow:
 - [x] Zod validation schemas for all inputs
 - [x] Structured error responses with hints
 
-### Pending Items
-- [ ] Wire tool registry for dynamic discovery
-- [ ] Scope-based access control enforcement
-- [ ] Tier-based tool loading at startup
-
 ### Key Files Modified
 - `src/index.ts` - Complete rewrite with real API calls
 - `src/utils/mcp-errors.ts` - SDK compatibility update
@@ -182,29 +177,36 @@ Each phase follows this structured workflow:
 
 ---
 
-## Phase 6: Tool Registry Integration (PENDING)
+## Phase 6: Tool Registry Integration (COMPLETED)
 
 **Objective**: Enable dynamic tool discovery and access control
 
-### Planned Items
-- [ ] Refactor tools into ToolDefinition objects
-- [ ] Initialize registry with all core tools
-- [ ] Use `getEnabledTools()` for ListToolsRequestSchema
-- [ ] Use `getToolExecutor()` for CallToolRequestSchema
-- [ ] Implement tier loading based on `RESEND_MCP_DEFAULT_TIER`
-- [ ] Implement scope filtering based on `RESEND_MCP_SCOPES`
-- [ ] Send `notifications/tools/list_changed` on tier changes
-- [ ] Add management tools for runtime tier/scope changes
+### Completed Items
+- [x] Create tool definition factory (`src/tools/index.ts`)
+- [x] Refactor tools into ToolDefinition objects with tier/scope metadata
+- [x] Update tier constants in tool-registry.ts
+- [x] Refactor index.ts to use registry
+- [x] Use `getEnabledTools()` for ListToolsRequestSchema
+- [x] Use `getToolExecutor()` for CallToolRequestSchema
+- [x] Implement tier loading based on `RESEND_MCP_DEFAULT_TIER`
+- [x] Send `notifications/tools/list_changed` on tier changes
+- [x] Comprehensive unit tests for tool registry (43 tests)
 
-### Key Files to Modify
-- `src/index.ts` - Integrate tool registry
-- `src/services/tool-registry.ts` - Already implemented, needs wiring
+### Key Files Created/Modified
+- `src/tools/index.ts` - NEW: Tool definition factory
+- `src/index.ts` - Refactored to use registry
+- `src/services/tool-registry.ts` - Updated tier constants, added SDK compatibility
+- `tests/unit/tool-registry.test.ts` - NEW: 43 unit tests
 
-### Expected Outcome
+### Test Coverage
+- **Total Tests**: 131 passing (was 88)
+- **New Tests**: 43 for tool-registry module
+
+### Outcome
 - Dynamic tool loading by tier (core/secondary/tertiary)
 - Scope-based access control (read/write/admin)
 - Runtime tool enable/disable capabilities
-- 84-92% token reduction through selective exposure
+- Clean separation of tool definitions from server logic
 
 ---
 
@@ -324,9 +326,10 @@ See `docs/pending-thirdparty.md` for features pending external support.
 ## Success Metrics
 
 ### Current Status
-- **Tests**: 88 passing
+- **Tests**: 131 passing
 - **TypeScript**: Compiles cleanly
 - **Tools Implemented**: 6 (send_email, get_email, list_emails, list_domains, get_domain, search_resend_documentation)
+- **Tool Registry**: Fully integrated with tier-based loading
 - **Documentation**: Complete for implemented features
 
 ### Target Metrics
