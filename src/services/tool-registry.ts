@@ -145,28 +145,35 @@ export const CORE_TOOLS = [
  * Secondary tools - commonly used features.
  */
 export const SECONDARY_TOOLS = [
+  // Domain
   "get_domain",
   "create_domain",
-  "verify_domain",
   "update_domain",
-  "batch_send_email",
+  "verify_domain",
+  // Email
   "update_email",
   "cancel_email",
+  // Contact
   "list_contacts",
   "create_contact",
   "get_contact",
   "update_contact",
+  // Template
   "list_templates",
   "create_template",
   "get_template",
   "update_template",
   "publish_template",
   "duplicate_template",
-  "list_topics",
-  "create_topic",
+  // Webhook
   "list_webhooks",
   "create_webhook",
+  "get_webhook",
   "update_webhook",
+  // Audience
+  "list_audiences",
+  "create_audience",
+  "get_audience",
 ];
 
 /**
