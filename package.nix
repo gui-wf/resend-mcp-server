@@ -37,6 +37,7 @@ pkgs.buildNpmPackage {
     # Copy compiled code and dependencies
     cp -r dist $out/lib/
     cp -r node_modules $out/lib/
+    cp -r data $out/lib/
     cp package.json $out/lib/
 
     # Create executable wrapper

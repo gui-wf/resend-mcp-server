@@ -72,7 +72,7 @@ If you use Nix with flakes, you can run the server directly:
 
 ```bash
 # Run directly from the flake registry
-nix run gui-wf:resend-mcp-server#
+nix run .#
 
 # Or from GitHub
 nix run github:gui-wf/resend-mcp-server
@@ -85,7 +85,7 @@ For Claude Desktop configuration with Nix:
   "mcpServers": {
     "resend": {
       "command": "nix",
-      "args": ["run", "gui-wf:resend-mcp-server#"],
+      "args": ["run", "github:gui-wf/resend-mcp-server", "--refresh"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }
@@ -101,7 +101,7 @@ Or if you have the flake in a local directory:
   "mcpServers": {
     "resend": {
       "command": "nix",
-      "args": ["run", "/path/to/resend-mcp-server#"],
+      "args": ["run", "/path/to/resend-mcp-server#", "--refresh"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }

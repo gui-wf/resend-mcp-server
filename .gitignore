@@ -47,7 +47,5 @@ openapi/merged.yaml
 *.env.enc
 .mcp.env.enc
 
-.mcp.json
-
 # Auto Claude data directory
 .auto-claude/
