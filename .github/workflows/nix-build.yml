@@ -1,0 +1,38 @@
+name: Nix Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Build with Nix
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Enable Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build package
+        run: nix build .# --print-build-logs
+
+      - name: Verify build output
+        run: |
+          test -f result/bin/resend-mcp-server
+          ./result/bin/resend-mcp-server 2>&1 | head -5 || true
+
+      - name: Check flake
+        run: nix flake check

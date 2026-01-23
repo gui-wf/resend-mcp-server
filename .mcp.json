@@ -1,28 +1,10 @@
 {
   "mcpServers": {
-    "nixos": {
-      "command": "nix",
-      "args": ["run", "github:utensils/mcp-nixos", "--"]
-    },
-    "perplexity": {
-      "command": "npx",
-      "args": ["-y", "perplexity-mcp"],
-      "env": {
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
-      }
-    },
-    "Ref": {
-      "command": "npx",
-      "args": ["ref-tools-mcp@latest"],
-      "env": {
-        "REF_API_KEY": "${REF_API_KEY}"
-      }
-    },
     "resend": {
       "command": "nix",
-      "args": ["run", ".#"],
+      "args": ["run", ".#", "--"],
       "env": {
-        "RESEND_API_KEY": ""
+        "RESEND_API_KEY": "${RESEND_API_KEY}"
       }
     }
   }

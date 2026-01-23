@@ -52,7 +52,7 @@ pkgs.buildNpmPackage {
 
   meta = with pkgs.lib; {
     description = "MCP server for Resend email API - send emails, manage domains, templates, and contacts";
-    license = licenses.agpl3Plus;
+    license = licenses.gpl3Plus;
     homepage = "https://github.com/gui-wf/resend-mcp-server";
     mainProgram = "resend-mcp-server";
     maintainers = [ ];
