@@ -16,6 +16,7 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        resend-mcp-server = pkgs.callPackage ./package.nix { };
       in
       {
         # Development shell
@@ -31,13 +32,13 @@
             # Runtime environments
             nodejs_24
             nodePackages.npm
-            nodePackages.typescript-language-server  # Editor integration only
+            nodePackages.typescript-language-server # Editor integration only
 
             # NOTE: All Node.js packages (TypeScript, etc.) are managed via
             # package.json, NOT in Nix. Nix only provides Node.js and npm.
 
             # Git & GitHub
-            gh  # GitHub CLI for PR workflows
+            gh # GitHub CLI for PR workflows
 
             # Secrets management
             sops
@@ -78,46 +79,8 @@
           '';
         };
 
-        # Production package (update after Speakeasy generation)
-        packages.default = pkgs.buildNpmPackage {
-          pname = "resend-mcp-server";
-          version = "0.1.0";
-          src = ./.;
-
-          # TODO: Update npmDepsHash after first build - run: nix build 2>&1 | grep "got:"
-          npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-
-          buildPhase = ''
-            npm run build
-          '';
-
-          installPhase = ''
-            runHook preInstall
-
-            mkdir -p $out/{bin,lib}
-
-            # Copy compiled code and dependencies
-            cp -r dist $out/lib/
-            cp -r node_modules $out/lib/
-            cp package.json $out/lib/
-
-            # Create executable wrapper
-            cat > $out/bin/resend-mcp-server <<EOF
-            #!/usr/bin/env bash
-            exec ${pkgs.nodejs_24}/bin/node $out/lib/dist/index.js "\$@"
-            EOF
-            chmod +x $out/bin/resend-mcp-server
-
-            runHook postInstall
-          '';
-
-          meta = with pkgs.lib; {
-            description = "MCP server for Resend email API - send emails, manage domains, templates, and contacts";
-            license = licenses.agpl3Plus;
-            homepage = "https://github.com/gui-wf/resend-mcp-server";
-            maintainers = [ ];
-          };
-        };
+        # Production package
+        packages.default = resend-mcp-server;
 
         # App for running the server
         apps.default = {
