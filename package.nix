@@ -1,11 +1,13 @@
 {
   pkgs,
-  version ? "0.1.0",
 }:
 
+let
+  packageJson = builtins.fromJSON (builtins.readFile ./package.json);
+in
 pkgs.buildNpmPackage {
   pname = "resend-mcp-server";
-  inherit version;
+  inherit (packageJson) version;
   src = ./.;
 
   npmDepsHash = "sha256-6UKWIKoWtUQ/blfXLh12IXan9XdCky10LCp2NP7jlxo=";
