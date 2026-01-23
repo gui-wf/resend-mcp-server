@@ -10,6 +10,19 @@ pkgs.buildNpmPackage {
 
   npmDepsHash = "sha256-6UKWIKoWtUQ/blfXLh12IXan9XdCky10LCp2NP7jlxo=";
 
+  # Native dependencies for sharp (used by @xenova/transformers)
+  nativeBuildInputs = with pkgs; [
+    pkg-config
+    python3
+  ];
+
+  buildInputs = with pkgs; [
+    vips
+  ];
+
+  # Use system libvips instead of downloading
+  SHARP_FORCE_GLOBAL_LIBVIPS = "1";
+
   buildPhase = ''
     npm run build
   '';
