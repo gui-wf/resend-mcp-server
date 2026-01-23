@@ -26,23 +26,24 @@ export type ToolScope = "read" | "write" | "admin";
  * Environment configuration schema.
  *
  * Validates:
- * - RESEND_API_KEY: Required, must start with "re_"
+ * - RESEND_API_KEY: Optional, must start with "re_" if provided
  * - RESEND_MCP_SCOPES: Optional comma-separated list of scopes
  * - RESEND_MCP_DEFAULT_TIER: Optional tier setting (core|secondary|tertiary|all)
  * - RESEND_RATE_LIMIT_MS: Optional rate limit interval
  * - RESEND_DEBUG: Optional debug flag
+ *
+ * NOTE: If RESEND_API_KEY is not provided, only documentation search is available.
  */
 const envSchema = z.object({
   /**
-   * Resend API key. Required and must start with "re_".
+   * Resend API key. Optional, but required for API operations.
+   * If not provided, only documentation search tool is available.
    * Get your key from: https://resend.com/api-keys
    */
   RESEND_API_KEY: z
-    .string({
-      required_error: "RESEND_API_KEY is required. Get your key from https://resend.com/api-keys",
-    })
-    .min(1, "RESEND_API_KEY cannot be empty")
-    .refine((key) => key.startsWith("re_"), {
+    .string()
+    .optional()
+    .refine((key) => !key || key.startsWith("re_"), {
       message: "RESEND_API_KEY must start with 're_'",
     }),
 
@@ -116,8 +117,8 @@ export type EnvConfig = z.infer<typeof envSchema>;
  * Provides typed access to validated environment variables.
  */
 export interface Config {
-  /** Resend API key */
-  apiKey: string;
+  /** Resend API key (undefined if not provided - docs search only mode) */
+  apiKey: string | undefined;
   /** Enabled scopes (undefined means all scopes) */
   scopes: ToolScope[] | undefined;
   /** Default tool tier */
@@ -126,6 +127,8 @@ export interface Config {
   rateLimitMs: number;
   /** Debug mode enabled */
   debug: boolean;
+  /** Whether API operations are available (API key is set) */
+  hasApiKey: boolean;
 }
 
 /**
@@ -173,25 +176,35 @@ export function loadConfig(): Config {
   }
 
   const env = result.data;
+  const hasApiKey = Boolean(env.RESEND_API_KEY);
 
-  cachedConfig = {
+  const config: Config = {
     apiKey: env.RESEND_API_KEY,
     scopes: env.RESEND_MCP_SCOPES as ToolScope[] | undefined,
     defaultTier: env.RESEND_MCP_DEFAULT_TIER as Exclude<ToolTier, "all">,
     rateLimitMs: env.RESEND_RATE_LIMIT_MS,
     debug: env.RESEND_DEBUG,
+    hasApiKey,
   };
 
-  if (cachedConfig.debug) {
+  cachedConfig = config;
+
+  if (config.debug) {
     log("Configuration loaded:");
-    log(`  API Key: ${cachedConfig.apiKey.slice(0, 6)}...`);
-    log(`  Scopes: ${cachedConfig.scopes?.join(", ") || "all"}`);
-    log(`  Default Tier: ${cachedConfig.defaultTier}`);
-    log(`  Rate Limit: ${cachedConfig.rateLimitMs}ms`);
-    log(`  Debug: ${cachedConfig.debug}`);
+    log(`  API Key: ${hasApiKey ? config.apiKey!.slice(0, 6) + "..." : "(not set - docs only mode)"}`);
+    log(`  Scopes: ${config.scopes?.join(", ") || "all"}`);
+    log(`  Default Tier: ${config.defaultTier}`);
+    log(`  Rate Limit: ${config.rateLimitMs}ms`);
+    log(`  Debug: ${config.debug}`);
   }
 
-  return cachedConfig;
+  if (!hasApiKey) {
+    log("Running in documentation-only mode (no API key provided)");
+    log("Only search_resend_documentation tool is available");
+    log("Set RESEND_API_KEY to enable all tools");
+  }
+
+  return config;
 }
 
 /**

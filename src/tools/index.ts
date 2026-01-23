@@ -1831,7 +1831,7 @@ function createListAudiencesTool(resend: Resend): ToolDefinition {
 
       try {
         const result = await withRateLimitAndRetry(() =>
-          resend.audiences.list()
+          resend.segments.list()
         );
 
         if (result.error) {
@@ -1878,7 +1878,7 @@ function createCreateAudienceTool(resend: Resend): ToolDefinition {
       try {
         const input = parseResult.data;
         const result = await withRateLimitAndRetry(() =>
-          resend.audiences.create(input)
+          resend.segments.create(input)
         );
 
         if (result.error) {
@@ -1929,7 +1929,7 @@ function createGetAudienceTool(resend: Resend): ToolDefinition {
       try {
         const { id } = parseResult.data;
         const result = await withRateLimitAndRetry(() =>
-          resend.audiences.get(id)
+          resend.segments.get(id)
         );
 
         if (result.error) {
@@ -3651,10 +3651,18 @@ function createListContactSegmentsTool(resend: Resend): ToolDefinition {
  * Create all tool definitions with Resend client.
  * Returns array of ToolDefinition objects ready for registry.
  *
- * @param resend - Resend client instance
+ * If resend is null, only the documentation search tool is returned
+ * (docs-only mode when no API key is provided).
+ *
+ * @param resend - Resend client instance or null for docs-only mode
  * @returns Array of tool definitions
  */
-export function createToolDefinitions(resend: Resend): ToolDefinition[] {
+export function createToolDefinitions(resend: Resend | null): ToolDefinition[] {
+  // Docs-only mode - return only the search tool
+  if (!resend) {
+    return [createSearchDocsTool()];
+  }
+
   return [
     // Core tools
     createSendEmailTool(resend),

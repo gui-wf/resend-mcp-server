@@ -41,8 +41,8 @@ const log = (message: string) => console.error(`[resend-mcp] ${message}`);
  * Create and configure the MCP server
  */
 function createServer(config: Config): Server {
-  // Initialize Resend client
-  const resend = new Resend(config.apiKey);
+  // Initialize Resend client only if API key is provided
+  const resend = config.hasApiKey ? new Resend(config.apiKey) : null;
 
   // Configure rate limiter
   configureRateLimiter({
@@ -64,7 +64,7 @@ function createServer(config: Config): Server {
     }
   );
 
-  // Create tool definitions with Resend client
+  // Create tool definitions - pass resend client or null for docs-only mode
   const allTools = createToolDefinitions(resend);
 
   // Initialize the tool registry
