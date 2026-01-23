@@ -2,7 +2,7 @@
   "mcpServers": {
     "resend": {
       "command": "nix",
-      "args": ["run", ".#", "--"],
+      "args": ["run", ".#", "--refresh", "--"],
       "env": {
         "RESEND_API_KEY": "${RESEND_API_KEY}"
       }
