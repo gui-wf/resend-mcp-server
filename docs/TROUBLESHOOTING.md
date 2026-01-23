@@ -9,6 +9,7 @@ This guide covers common issues and their solutions when using the Resend MCP Se
 - [Tool Execution Errors](#tool-execution-errors)
 - [Documentation Search Issues](#documentation-search-issues)
 - [Claude Desktop Integration](#claude-desktop-integration)
+  - [Connection Timeout on First Run](#connection-timeout-on-first-run)
 - [Debug Mode](#debug-mode)
 
 ## Server Startup Issues
@@ -273,6 +274,31 @@ This generates the vector embeddings from documentation.
   }
 }
 ```
+
+### Connection Timeout on First Run
+
+**Symptom:** Claude Desktop fails to connect to the server on first use, but works after retrying.
+
+**Cause:** TypeScript compilation or dependency initialization takes too long on first run, causing Claude Desktop to timeout before the server is ready.
+
+**Solution:**
+
+Run the build manually before connecting:
+
+```bash
+cd /path/to/resend-mcp-server
+npm run build
+```
+
+Then restart Claude Desktop. The pre-compiled server will start much faster.
+
+If using `npx`, the first invocation downloads and compiles the package. Run it once manually in a terminal first:
+
+```bash
+RESEND_API_KEY=re_... npx resend-mcp-server
+```
+
+Wait for it to start successfully, then close it and restart Claude Desktop.
 
 ## Debug Mode
 
