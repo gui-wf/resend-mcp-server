@@ -66,6 +66,50 @@ npm run build
 }
 ```
 
+### Alternative: Nix Flake
+
+If you use Nix with flakes, you can run the server directly:
+
+```bash
+# Run directly from the flake registry
+nix run gui-wf:resend-mcp-server#
+
+# Or from GitHub
+nix run github:gui-wf/resend-mcp-server
+```
+
+For Claude Desktop configuration with Nix:
+
+```json
+{
+  "mcpServers": {
+    "resend": {
+      "command": "nix",
+      "args": ["run", "gui-wf:resend-mcp-server#"],
+      "env": {
+        "RESEND_API_KEY": "re_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Or if you have the flake in a local directory:
+
+```json
+{
+  "mcpServers": {
+    "resend": {
+      "command": "nix",
+      "args": ["run", "/path/to/resend-mcp-server#"],
+      "env": {
+        "RESEND_API_KEY": "re_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
 ## Available Tools
 
 ### Core Tools (Always Available)

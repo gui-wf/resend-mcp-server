@@ -33,9 +33,8 @@
             nodePackages.npm
             nodePackages.typescript-language-server  # Editor integration only
 
-            # AIDEV-NOTE: All Node.js packages (TypeScript, Speakeasy, Spectral, etc.)
-            # are managed via package.json, NOT in Nix
-            # Nix only provides Node.js binary and npm
+            # NOTE: All Node.js packages (TypeScript, etc.) are managed via
+            # package.json, NOT in Nix. Nix only provides Node.js and npm.
 
             # Git & GitHub
             gh  # GitHub CLI for PR workflows
@@ -85,7 +84,7 @@
           version = "0.1.0";
           src = ./.;
 
-          # AIDEV-TODO: Update npmDepsHash after first build - run: nix build 2>&1 | grep "got:" | awk '{print $2}'
+          # TODO: Update npmDepsHash after first build - run: nix build 2>&1 | grep "got:"
           npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
           buildPhase = ''
