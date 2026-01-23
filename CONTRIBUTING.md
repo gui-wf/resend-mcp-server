@@ -2,40 +2,9 @@
 
 Thank you for your interest in contributing! This document provides guidelines and information for contributors.
 
-## Contributor License Agreement (CLA)
+## License
 
-This project requires contributors to sign a Contributor License Agreement (CLA) before their contributions can be merged.
-
-### Why Do We Have a CLA?
-
-**resend-mcp-server** uses a dual-licensing model:
-
-| License | Availability | Requirements |
-|---------|--------------|--------------|
-| **AGPL-3.0** | Always free | Must share modifications if deployed |
-| **Commercial** | Paid license | No copyleft obligations |
-
-The CLA ensures the project maintainer has the rights needed to offer both licensing options. This model is used by many successful projects including Grafana, MongoDB, and others.
-
-### What You're Agreeing To
-
-By signing the CLA, you:
-
-- **Grant** a broad license for your contributions to be used under AGPL-3.0 and commercial terms
-- **Retain** full copyright ownership of your code
-- **Can** use your contributions in your own projects under any terms you choose
-- **Confirm** that you have the right to make the contribution
-
-### How to Sign
-
-When you open a pull request, a bot will automatically check if you've signed the CLA:
-
-1. If you haven't signed, the bot will comment with instructions
-2. Read the [CLA document](./CLA.md)
-3. Reply to the PR with: `I have read the CLA Document and I hereby sign the CLA`
-4. The bot will record your signature and update the PR status
-
-**This is a one-time process** - once signed, it applies to all your future contributions.
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)**. By contributing, you agree that your contributions will be licensed under the same license.
 
 ---
 
@@ -118,15 +87,13 @@ When adding new tools:
 2. **Create** a feature branch (`git checkout -b feature/my-feature`)
 3. **Make** your changes
 4. **Test** your changes thoroughly
-5. **Sign** the CLA when prompted
-6. **Submit** a pull request
+5. **Submit** a pull request
 
 ### PR Requirements
 
 - [ ] Code follows project style guidelines
 - [ ] Tests pass (if applicable)
 - [ ] Documentation updated (if applicable)
-- [ ] CLA signed
 
 ---
 
