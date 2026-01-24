@@ -49,3 +49,6 @@ openapi/merged.yaml
 
 # Auto Claude data directory
 .auto-claude/
+
+# Local proposals (not for public repo)
+proposals/
