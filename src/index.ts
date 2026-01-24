@@ -7,7 +7,7 @@
  *
  * @module resend-mcp-server
  * @version 1.0.0
- * @license GPL-3.0-or-later
+ * @license Apache-2.0
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
