@@ -28,6 +28,14 @@ jobs:
       - name: Enable Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
+      - name: Install dependencies
+        run: nix develop --command npm ci
+
+      - name: Run tests
+        run: nix develop --command npm run test:run
+        env:
+          RESEND_API_KEY: re_test_key_for_ci
+
       - name: Build package
         run: nix build .# --print-build-logs
 

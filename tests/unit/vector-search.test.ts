@@ -158,7 +158,7 @@ describe("truncateToTokenBudget", () => {
 });
 
 describe("loadEmbedder", () => {
-  // AIDEV-NOTE: These tests load the actual model, so they need longer timeout
+  // NOTE: These tests load the actual model, so they need longer timeout
   // The model is cached globally, so subsequent tests are fast
 
   it("should load the embedding model successfully", async () => {
