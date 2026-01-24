@@ -92,6 +92,10 @@ Use for temporary code notes (max 120 chars):
 - `TODO:` - Action items
 - `QUESTION:` - Decisions needed
 
+## Releasing
+
+See [docs/releasing.md](docs/releasing.md) for versioning strategy and release process. Uses FlakeHub for Nix binary distribution with hybrid versioning (rolling on master, semver on tags).
+
 ## Pending Third-Party Features
 
 See [docs/pending-thirdparty.md](docs/pending-thirdparty.md) for features blocked on external service support (e.g., Resend OAuth). Check this file when users ask about authentication alternatives, OAuth, or "why can't we do X" - the answer may be "waiting on third-party support." Verify online if status has changed.

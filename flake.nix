@@ -39,6 +39,7 @@
 
             # Git & GitHub
             gh # GitHub CLI for PR workflows
+            fh # FlakeHub CLI for publishing
 
             # Secrets management
             sops
