@@ -2,31 +2,33 @@
 
 A comprehensive [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server for the [Resend](https://resend.com) email API. Enables AI assistants like Claude to send emails, manage domains, contacts, audiences, and more through a standardized interface.
 
+## Quick Run
+
+Run immediately without installation:
+
+```bash
+# Using npx (Node.js)
+npx resend-mcp-server
+
+# Using Nix flakes
+nix run github:gui-wf/resend-mcp-server
+```
+
+Requires `RESEND_API_KEY` environment variable. Get yours from [Resend Dashboard](https://resend.com/api-keys).
+
 ## Disclaimer
 
 **This is an unofficial, community-developed project.** It is not affiliated with, endorsed by, or supported by Resend. Use at your own risk.
 
-## Quick Start
-
-### Installation
-
-```bash
-npm install resend-mcp-server
-```
-
-Or install globally:
-
-```bash
-npm install -g resend-mcp-server
-```
-
-### Claude Desktop Configuration
+## Claude Desktop Configuration
 
 Add the following to your Claude Desktop configuration file:
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-**Linux**: `~/.config/Claude/claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+### Using npx (Recommended)
 
 ```json
 {
@@ -42,43 +44,7 @@ Add the following to your Claude Desktop configuration file:
 }
 ```
 
-Get your API key from the [Resend Dashboard](https://resend.com/api-keys).
-
-### Alternative: Run from Source
-
-```bash
-git clone https://github.com/gui-wf/resend-mcp-server.git
-cd resend-mcp-server
-npm install
-npm run build
-
-# Add to Claude Desktop config:
-{
-  "mcpServers": {
-    "resend": {
-      "command": "node",
-      "args": ["/path/to/resend-mcp-server/dist/index.js"],
-      "env": {
-        "RESEND_API_KEY": "re_your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-### Alternative: Nix Flake
-
-If you use Nix with flakes, you can run the server directly:
-
-```bash
-# Run directly from the flake registry
-nix run .#
-
-# Or from GitHub
-nix run github:gui-wf/resend-mcp-server
-```
-
-For Claude Desktop configuration with Nix:
+### Using Nix
 
 ```json
 {
@@ -94,14 +60,31 @@ For Claude Desktop configuration with Nix:
 }
 ```
 
-Or if you have the flake in a local directory:
+## Installation
+
+### npm (Global)
+
+```bash
+npm install -g resend-mcp-server
+```
+
+### From Source
+
+```bash
+git clone https://github.com/gui-wf/resend-mcp-server.git
+cd resend-mcp-server
+npm install
+npm run build
+```
+
+Then configure Claude Desktop with:
 
 ```json
 {
   "mcpServers": {
     "resend": {
-      "command": "nix",
-      "args": ["run", "/path/to/resend-mcp-server#", "--refresh"],
+      "command": "node",
+      "args": ["/path/to/resend-mcp-server/dist/index.js"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }
