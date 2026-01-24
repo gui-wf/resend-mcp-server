@@ -11,7 +11,7 @@ pkgs.buildNpmPackage {
   inherit (packageJson) version;
   src = ./.;
 
-  npmDepsHash = "sha256-SsEBulvvEUNvrXOa5B9LO2zE5lNKnadsyxxaIiuh2pU=";
+  npmDepsHash = "sha256-RBhnzaRTjLmHlBlBb+uQWb8y/hgfFzJHr8+83U8m07Q=";
 
   # Native dependencies for sharp (used by @xenova/transformers)
   nativeBuildInputs = with pkgs; [
