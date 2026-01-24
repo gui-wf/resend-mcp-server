@@ -48,18 +48,12 @@ Each phase follows this structured workflow:
 - [x] MCP SDK integration (`@modelcontextprotocol/sdk`)
 - [x] Basic server structure with stdio transport
 - [x] Environment validation for RESEND_API_KEY
-- [x] OpenAPI spec (`openapi/resend.yaml`)
-- [x] Overlay system (scopes, hints, descriptions, exclusions)
-- [x] Merge script for OpenAPI overlays
 - [x] Nix flake for development environment
 - [x] ESLint and TypeScript configuration
 
 ### Key Files Created
 - `src/index.ts` - MCP server entry point
 - `src/config/environment.ts` - Environment validation with Zod
-- `openapi/resend.yaml` - Base OpenAPI specification
-- `openapi/overlays/*.yaml` - MCP customization overlays
-- `scripts/merge-openapi.sh` - Overlay merge script
 
 ### Commit Reference
 - Initial commits establishing foundation
@@ -386,8 +380,6 @@ See `docs/pending-thirdparty.md` for features pending external support.
 
 ## References
 
-- [Tool Curation Guide](./tool-curation.md) - Complete endpoint inventory
-- [Token Optimization Guide](./token-optimization-guide.md) - Token budget analysis
 - [Architecture Documentation](./ARCHITECTURE.md) - System design
 - [Troubleshooting Guide](./TROUBLESHOOTING.md) - Common issues
 - [Resend API Reference](https://resend.com/docs/api-reference/introduction)

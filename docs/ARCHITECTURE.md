@@ -30,8 +30,6 @@ resend-mcp-server/
 │   └── build-embeddings.ts         # Embeddings generation script
 ├── tests/
 │   └── *.test.ts                   # Vitest test files
-├── openapi/
-│   └── *.yaml                      # OpenAPI specifications
 └── dist/                           # Compiled JavaScript output
 ```
 

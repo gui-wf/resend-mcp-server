@@ -39,8 +39,6 @@ tmp/
 # Build artifacts
 *.tsbuildinfo
 
-# Generated files
-openapi/merged.yaml
 # Note: data/embeddings.json is committed for documentation search functionality
 
 # Secrets

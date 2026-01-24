@@ -12,7 +12,6 @@ eslint.config.*
 
 # Scripts and tools
 scripts/
-openapi/
 
 # Documentation sources
 docs/
@@ -39,8 +38,6 @@ coverage/
 *.swo
 *~
 
-# Speakeasy
-.speakeasy/
 
 # Auto-generated development files
 .auto-claude/

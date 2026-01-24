@@ -60,7 +60,6 @@
             # Check if npm packages are installed
             if [ -d "node_modules" ]; then
               echo "TypeScript: $(npx tsc --version 2>/dev/null || echo 'not found')"
-              echo "Speakeasy: $(npx speakeasy --version 2>/dev/null || echo 'not found')"
             else
               echo "Node modules: Not installed"
               echo ""
@@ -70,12 +69,11 @@
             echo ""
             echo "Quick Start:"
             echo "  1. npm install          - Install dependencies"
-            echo "  2. npm run generate     - Generate server from OpenAPI"
-            echo "  3. npm run build        - Compile TypeScript"
-            echo "  4. npm run dev          - Run server in development mode"
-            echo "  5. npm run inspector    - Test with MCP Inspector"
+            echo "  2. npm run build        - Compile TypeScript"
+            echo "  3. npm run dev          - Run server in development mode"
+            echo "  4. npm run inspector    - Test with MCP Inspector"
             echo ""
-            echo "See ROADMAP.md and IMPLEMENTATION_PLAN.md for details"
+            echo "See README.md for details"
           '';
         };
 
