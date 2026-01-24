@@ -1,6 +1,6 @@
 {
   "name": "mcp-resend",
-  "version": "1.0.0-5",
+  "version": "1.0.1",
   "description": "Comprehensive MCP Server for Resend API - manage emails, domains, templates, contacts, and more via AI assistants",
   "type": "module",
   "main": "dist/index.js",
@@ -48,7 +48,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gui-wf/resend-mcp-server.git"
+    "url": "git+https://github.com/gui-wf/resend-mcp-server.git"
   },
   "bugs": {
     "url": "https://github.com/gui-wf/resend-mcp-server/issues"
