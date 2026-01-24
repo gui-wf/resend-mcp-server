@@ -10,7 +10,10 @@ Run immediately without installation:
 # Using npx (Node.js)
 npx resend-mcp-server
 
-# Using Nix flakes
+# Using Nix flakes (with binary cache)
+nix run flakehub:gui-wf/resend-mcp-server
+
+# Using Nix flakes (from source)
 nix run github:gui-wf/resend-mcp-server
 ```
 
