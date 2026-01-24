@@ -8,13 +8,13 @@ Run immediately without installation:
 
 ```bash
 # Using npx (Node.js)
-npx resend-mcp-server
+npx mcp-resend
 
 # Using Nix flakes (with binary cache)
-nix run flakehub:gui-wf/resend-mcp-server
+nix run flakehub:gui-wf/mcp-resend
 
 # Using Nix flakes (from source)
-nix run github:gui-wf/resend-mcp-server
+nix run github:gui-wf/mcp-resend
 ```
 
 Requires `RESEND_API_KEY` environment variable. Get yours from [Resend Dashboard](https://resend.com/api-keys).
@@ -38,7 +38,7 @@ Add the following to your Claude Desktop configuration file:
   "mcpServers": {
     "resend": {
       "command": "npx",
-      "args": ["resend-mcp-server"],
+      "args": ["mcp-resend"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }
@@ -54,7 +54,7 @@ Add the following to your Claude Desktop configuration file:
   "mcpServers": {
     "resend": {
       "command": "nix",
-      "args": ["run", "github:gui-wf/resend-mcp-server", "--refresh"],
+      "args": ["run", "github:gui-wf/mcp-resend", "--refresh"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }
@@ -68,14 +68,14 @@ Add the following to your Claude Desktop configuration file:
 ### npm (Global)
 
 ```bash
-npm install -g resend-mcp-server
+npm install -g mcp-resend
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/gui-wf/resend-mcp-server.git
-cd resend-mcp-server
+git clone https://github.com/gui-wf/mcp-resend.git
+cd mcp-resend
 npm install
 npm run build
 ```
@@ -87,7 +87,7 @@ Then configure Claude Desktop with:
   "mcpServers": {
     "resend": {
       "command": "node",
-      "args": ["/path/to/resend-mcp-server/dist/index.js"],
+      "args": ["/path/to/mcp-resend/dist/index.js"],
       "env": {
         "RESEND_API_KEY": "re_your_api_key_here"
       }
