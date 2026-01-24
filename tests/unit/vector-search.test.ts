@@ -157,7 +157,11 @@ describe("truncateToTokenBudget", () => {
   });
 });
 
-describe("loadEmbedder", () => {
+// Skip embedder tests in CI - onnxruntime-node pre-compiled binaries are
+// incompatible with GitHub Actions runners regardless of Nix environment
+const skipInCI = process.env.CI ? describe.skip : describe;
+
+skipInCI("loadEmbedder", () => {
   // NOTE: These tests load the actual model, so they need longer timeout
   // The model is cached globally, so subsequent tests are fast
 
@@ -199,7 +203,7 @@ describe("loadEmbedder", () => {
   });
 });
 
-describe("embedQuery", () => {
+skipInCI("embedQuery", () => {
   it("should generate 384-dimensional embedding", async () => {
     const embedding = await embedQuery("test query");
 
